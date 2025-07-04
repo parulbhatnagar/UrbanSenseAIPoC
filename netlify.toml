@@ -6,7 +6,7 @@
   publish = "."
 
 # SPA routing configuration - this is the crucial part for fixing "Page Not Found" errors
-[[redirects]]
+[[rewrites]]
   from = "/*"
   to = "/index.html"
   status = 200
