@@ -1,10 +1,10 @@
 # UrbanSenseAI
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/parulbhatnagar/UrbanSenseAI/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/parulbhatnagar/UrbanSenseAIPoC/blob/main/LICENSE)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-green.svg)](https://web.dev/progressive-web-apps/)
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
 
-**[Live Demo &raquo;](https://your-deployment-link-here.netlify.app/)**
+**[Live Demo &raquo;](https://dancing-bubblegum-d8856d.netlify.app/)**
 
 UrbanSenseAI is a progressive web application (PWA) designed to assist visually impaired individuals in navigating urban environments. It uses a smartphone's camera to provide real-time audio descriptions of the surroundings, powered by the Google Gemini AI model.
 
@@ -40,6 +40,7 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 - **AI**: Google Gemini API (`@google/genai`)
 - **Web APIs**: WebRTC (getUserMedia), Web Speech API (SpeechRecognition, SpeechSynthesis)
 - **PWA**: Service Workers, Web App Manifest
+- **Hosting**: Netlify
 
 ---
 
@@ -59,8 +60,8 @@ You will also need a **Google Gemini API Key**. You can obtain one for free from
 
 1.  **Clone the repository:**
     ```sh
-    git clone https://github.com/parulbhatnagar/UrbanSenseAI.git
-    cd UrbanSenseAI
+    git clone https://github.com/parulbhatnagar/UrbanSenseAIPoC.git
+    cd UrbanSenseAIPoC
     ```
 
 2.  **Install a local server:**
@@ -79,7 +80,7 @@ You will also need a **Google Gemini API Key**. You can obtain one for free from
     The terminal will show you a "Local" address, typically `http://localhost:3000`. Open this URL in your web browser. The app should now be running.
 
 5.  **Set the API Key:**
-    On the first launch, the app will prompt you to enter your Google Gemini API key. Paste your key into the modal to enable the app's features.
+    On the first launch, a modal will prompt you to enter your Google Gemini API key. Paste your key to enable the app's features.
 
 ---
 
@@ -87,22 +88,30 @@ You will also need a **Google Gemini API Key**. You can obtain one for free from
 
 This project is configured for easy deployment on a static hosting service like Netlify, directly from your GitHub repository.
 
+### Critical Deployment Step: `netlify.toml`
+
+**This file is required to fix the "Page Not Found" error on Netlify.**
+
+This project is a Single Page Application (SPA). The `netlify.toml` file contains the redirect rules that tell Netlify to serve `index.html` for all routes, allowing the React app to handle routing.
+
+### Deployment Instructions
+
 1.  **Push to your GitHub Repository:**
-    Make sure your latest code is pushed to your main branch on GitHub.
+    Make sure your latest code, especially the `netlify.toml` file, is pushed to your main branch on GitHub.
 
 2.  **Deploy from Netlify:**
     - Go to [Netlify](https://www.netlify.com/) and sign up or log in.
     - Click "Add new site" -> "Import an existing project".
     - Connect to GitHub and authorize Netlify.
-    - Select your `UrbanSenseAI` repository.
-    - Netlify will detect it's a static site. You do not need a build command or publish directory. Just click "Deploy site".
-    - Netlify will provide you with a live URL. **Remember to update the "Live Demo" link at the top of this README!**
+    - Select your `UrbanSenseAIPoC` repository.
+    - The deployment settings can be left blank because Netlify will read the configuration from `netlify.toml`. Click "Deploy site".
+    - Netlify will provide you with a live URL.
 
 ## Installing as a PWA on Your Phone
 
 Once deployed, you can install UrbanSenseAI on your phone for the best experience.
 
-1.  Open the live Netlify URL in the browser on your phone (Chrome for Android, Safari for iOS).
+1.  Open the live Netlify URL (`https://dancing-bubblegum-d8856d.netlify.app/`) in the browser on your phone (Chrome for Android, Safari for iOS).
 2.  Set your API key when prompted.
 3.  Follow the on-screen prompt or browser menu option to **"Install App"** or **"Add to Home Screen"**.
 4.  Launch the app from its new icon on your home screen.
