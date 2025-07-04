@@ -156,18 +156,25 @@ function App() {
   }, [anyActionInProgress, startListening]);
 
   return (
-    <div className="h-dvh w-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
-      <div className="relative flex-grow">
+    <div className="h-dvh w-screen bg-gray-900 text-white relative font-sans overflow-hidden">
+      {/* Camera view will act as the background, filling the entire screen */}
+      <div className="absolute inset-0">
         <CameraView ref={cameraRef} onCameraError={handleCameraError} />
-        <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-60 backdrop-blur-sm">
-          <h1 className="text-xl font-bold text-center text-teal-300">UrbanSenseAI</h1>
-          <p className={`mt-2 text-center text-lg p-3 rounded-lg transition-colors duration-300 ${error ? 'bg-red-800 text-white' : 'bg-transparent'}`}>
-            {lastResponse}
-          </p>
-        </div>
       </div>
-
-      <div className="flex-shrink-0 bg-gray-800 p-4 shadow-inner border-t-2 border-teal-500">
+      
+      {/* Top status bar overlay */}
+      <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-60 backdrop-blur-sm z-10">
+        <h1 className="text-xl font-bold text-center text-teal-300">UrbanSenseAI</h1>
+        <p
+          className={`mt-2 text-center text-lg p-3 rounded-lg transition-colors duration-300 ${error ? 'bg-red-800 text-white' : 'bg-transparent'}`}
+          aria-live="polite"
+        >
+          {lastResponse}
+        </p>
+      </div>
+      
+      {/* Bottom controls overlay */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gray-800 p-4 shadow-inner border-t-2 border-teal-500 z-10">
         <div className="flex justify-around items-center gap-2">
           {(Object.keys(TASK_PROMPTS) as AssistanceTask[]).map((task) => (
               <ActionButton
