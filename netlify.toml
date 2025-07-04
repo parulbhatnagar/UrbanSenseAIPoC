@@ -1,6 +1,6 @@
 [build]
-  command = "npm run build"  # Run Vite build to generate dist folder
-  publish = "dist"           # Publish the dist folder where index.html is located
+  command = "npm install && npm run build"  # Explicitly install dependencies before building
+  publish = "dist"
 
 [[rewrites]]
   from = "/*"
