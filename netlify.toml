@@ -1,24 +1,14 @@
 [build]
-  # No build command needed for static site
-  # Your project appears to be a static React app served directly
-  
-  # Root directory contains the static files (index.html, etc.)
-  publish = "."
+  command = "npm run build"  # Run the Vite build to generate the dist folder
+  publish = "dist"           # Set the publish directory to dist, where index.html is located
 
-# SPA routing configuration - this is the crucial part for fixing "Page Not Found" errors
 [[rewrites]]
   from = "/*"
   to = "/index.html"
   status = 200
   force = false
 
-# Optional: Handle API routes separately if you have them
-# [[redirects]]
-#   from = "/api/*"
-#   to = "/.netlify/functions/:splat"
-#   status = 200
-
-# Optional: Security headers for better security
+# Keep your existing headers and other settings
 [[headers]]
   for = "/*"
   [headers.values]
@@ -27,27 +17,13 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Optional: Cache static assets
 [[headers]]
   for = "/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Optional: Environment-specific settings
 [context.production.environment]
   NODE_ENV = "production"
 
 [context.deploy-preview.environment]
   NODE_ENV = "development"
-
-# Optional: Form handling (if you use Netlify Forms)
-# [build.processing]
-#   skip_processing = false
-# [build.processing.css]
-#   bundle = true
-#   minify = true
-# [build.processing.js]
-#   bundle = true
-#   minify = true
-# [build.processing.html]
-#   pretty_urls = true
