@@ -1,5 +1,5 @@
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 // This is a placeholder. The actual key will be provided by the user via the UI.
 export const API_KEY_PLACEHOLDER = "YOUR_API_KEY_HERE";
