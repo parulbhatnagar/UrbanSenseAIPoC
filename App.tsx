@@ -2,12 +2,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { AssistanceTask } from './types.ts';
 import { TASK_PROMPTS } from './constants.ts';
-import { analyzeImageWithGemini, API_KEY_PLACEHOLDER } from './services/geminiService.ts';
+import { analyzeImageWithGemini } from './services/geminiService.ts';
 import { useTextToSpeech } from './hooks/useTextToSpeech.ts';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition.ts';
 import CameraView, { CameraViewHandles } from './components/CameraView.tsx';
 import ActionButton from './components/ActionButton.tsx';
-import ApiKeyModal from './components/ApiKeyModal.tsx';
 
 const BusIcon: React.FC<{className: string}> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -54,29 +53,9 @@ function App() {
   const [error, setError] = useState<string>('');
   const cameraRef = useRef<CameraViewHandles>(null);
   const { speak, isSpeaking } = useTextToSpeech();
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('gemini_api_key') || API_KEY_PLACEHOLDER);
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (!apiKey || apiKey === API_KEY_PLACEHOLDER) {
-      setIsApiKeyModalOpen(true);
-      setLastResponse("Please set your Gemini API key to begin.");
-    } else {
-      setIsApiKeyModalOpen(false);
-    }
-  }, [apiKey]);
   
-  const handleApiKeySave = (newKey: string) => {
-    localStorage.setItem('gemini_api_key', newKey);
-    setApiKey(newKey);
-    setIsApiKeyModalOpen(false);
-    const readyMessage = "API Key saved. Ready to assist.";
-    setLastResponse(readyMessage);
-    speak(readyMessage);
-  };
-
   const handleTaskSelect = useCallback(async (task: AssistanceTask) => {
-    if (isProcessing || isSpeaking || !apiKey || apiKey === API_KEY_PLACEHOLDER) return;
+    if (isProcessing || isSpeaking) return;
 
     setError('');
     setIsProcessing(task);
@@ -96,12 +75,12 @@ function App() {
     }
 
     const prompt = TASK_PROMPTS[task].prompt;
-    const result = await analyzeImageWithGemini(base64Image, prompt, apiKey);
+    const result = await analyzeImageWithGemini(base64Image, prompt);
 
     setLastResponse(result);
     speak(result);
     setIsProcessing(null);
-  }, [isProcessing, isSpeaking, speak, apiKey]);
+  }, [isProcessing, isSpeaking, speak]);
   
   const handleCameraError = useCallback((errorMessage: string) => {
     setError(errorMessage);
@@ -149,12 +128,35 @@ function App() {
       }
   }, [isListening]);
   
-  const isReady = !!apiKey && apiKey !== API_KEY_PLACEHOLDER;
-  const anyActionInProgress = !!isProcessing || isSpeaking || isListening || !!error || !isReady;
+  const anyActionInProgress = !!isProcessing || isSpeaking || isListening || !!error;
+
+  // Handle 'Space' key to activate voice command for accessibility and a "physical button" feel.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const targetEl = event.target as HTMLElement;
+      // Do not interfere if user is typing in an input.
+      if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      // Use spacebar as a trigger for the voice command.
+      if (event.code === 'Space' || event.key === ' ') {
+        event.preventDefault(); // Prevent default browser action (e.g., scrolling).
+        if (!anyActionInProgress) {
+          startListening();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [anyActionInProgress, startListening]);
 
   return (
-    <div className="h-screen w-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
-      {isApiKeyModalOpen && <ApiKeyModal onSave={handleApiKeySave} />}
+    <div className="h-dvh w-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
       <div className="relative flex-grow">
         <CameraView ref={cameraRef} onCameraError={handleCameraError} />
         <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-60 backdrop-blur-sm">
