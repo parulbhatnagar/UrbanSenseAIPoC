@@ -1,18 +1,24 @@
 
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
-// This is a placeholder. The actual key will be provided by the user via the UI.
-export const API_KEY_PLACEHOLDER = "YOUR_API_KEY_HERE";
+// --- IMPORTANT ---
+// Replace "YOUR_API_KEY_HERE" with your actual Google Gemini API key.
+// For security reasons, it is strongly recommended to use environment variables
+// in a production environment instead of hardcoding the key in the source code.
+const API_KEY = "AIzaSyBuSZfhkBbyBCAM4Aw3JQF6cQYGbpEvBhw";
 
-export const analyzeImageWithGemini = async (base64Image: string, prompt: string, apiKey: string): Promise<string> => {
-  if (!apiKey || apiKey === API_KEY_PLACEHOLDER) {
-    const errorMsg = "API Key not provided. Please set your API key in the app.";
+// Initialize the GoogleGenAI client with the hardcoded API key.
+const ai = new GoogleGenAI({ apiKey: API_KEY });
+
+export const analyzeImageWithGemini = async (base64Image: string, prompt: string): Promise<string> => {
+  // Check if the API key has been replaced.
+  if (API_KEY === "YOUR_API_KEY_HERE" || !API_KEY) {
+    const errorMsg = "API Key not set. Please open 'services/geminiService.ts' and replace 'YOUR_API_KEY_HERE' with your actual Gemini API key.";
     console.error(errorMsg);
     return errorMsg;
   }
-  
+
   try {
-    const ai = new GoogleGenAI({ apiKey });
     const model = 'gemini-2.5-flash-preview-04-17';
 
     const imagePart = {
@@ -40,12 +46,9 @@ export const analyzeImageWithGemini = async (base64Image: string, prompt: string
 
   } catch (error) {
     console.error("Error analyzing image with Gemini:", error);
-    if (error instanceof Error) {
-        if (error.message.includes('API key not valid')) {
-             return "Your API key is not valid. Please check it and save it again.";
-        }
-        return `An error occurred: ${error.message}`;
+    if (error instanceof Error && error.message.includes('API key')) {
+        return "The application is currently unable to connect to the AI service. This might be due to an invalid API key or network issues.";
     }
-    return "An unknown error occurred while contacting the AI.";
+    return "An unknown error occurred while contacting the AI. Please try again later.";
   }
 };
