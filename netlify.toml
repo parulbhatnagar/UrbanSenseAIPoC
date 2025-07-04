@@ -1,6 +1,6 @@
 [build]
-  command = "npm run build"  # Run the Vite build to generate the dist folder
-  publish = "dist"           # Set the publish directory to dist, where index.html is located
+  command = "npm run build"  # Run Vite build to generate dist folder
+  publish = "dist"           # Publish the dist folder where index.html is located
 
 [[rewrites]]
   from = "/*"
@@ -8,7 +8,6 @@
   status = 200
   force = false
 
-# Keep your existing headers and other settings
 [[headers]]
   for = "/*"
   [headers.values]
