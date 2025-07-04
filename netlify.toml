@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build"
+  command = "CI=false npm install --include=dev && npm run build"  # Ensure devDependencies are installed
   publish = "dist"
   environment = { NODE_VERSION = "18" }
 
