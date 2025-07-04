@@ -1,7 +1,7 @@
 [build]
-  command = "npm install && npm run build"  # Install dependencies and build
-  publish = "dist"                          # Publish Vite output directory
-  environment = { NODE_VERSION = "18" }     # Set Node.js version
+  command = "npm install && npm run build"
+  publish = "dist"
+  environment = { NODE_VERSION = "18" }
 
 [[rewrites]]
   from = "/*"
