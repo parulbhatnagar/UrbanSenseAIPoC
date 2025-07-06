@@ -1,4 +1,3 @@
-
 # UrbanSenseAI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/parulbhatnagar/UrbanSenseAIPoC/blob/main/LICENSE)
@@ -27,10 +26,11 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 
 - **Real-Time Analysis**: Uses the live camera feed to analyze the environment.
 - **Task-Specific Assistance**: Provides targeted help for common urban tasks like finding a bus, crossing a road, exploring surroundings, and locating shops.
-- **Text-to-Speech (TTS)**: Reads analysis results aloud for clear, audible feedback.
-- **Speech Recognition**: Allows for hands-free operation using voice commands.
+- **Multi-Language Support**: Offers audio feedback and UI text in English, Hindi, and Spanish.
+- **Text-to-Speech (TTS)**: Reads analysis results aloud for clear, audible feedback in the selected language.
+- **Speech Recognition**: Allows for hands-free operation using voice commands (commands are in English).
 - **Progressive Web App (PWA)**: Installable on mobile devices for an app-like experience with offline capabilities for the user interface.
-- **Simplified Setup**: Uses a hardcoded API key for quick and easy local development.
+- **Secure by Design**: Uses environment variables for API key management, ensuring your key is not exposed on the client-side.
 
 ---
 
@@ -47,47 +47,13 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 
 ## Getting Started
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
-
 ### Prerequisites
 
-You need to have [Node.js](https://nodejs.org/) and npm (which comes with Node.js) installed on your computer.
-
-You will also need a **Google Gemini API Key**. You can obtain one for free from [Google AI Studio](https://aistudio.google.com/app/apikey).
+You will need a **Google Gemini API Key**. You can obtain one for free from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 ### Configuration
 
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/parulbhatnagar/UrbanSenseAIPoC.git
-    cd UrbanSenseAIPoC
-    ```
-
-2.  **Add your API Key:**
-    - Open the file `services/geminiService.ts`.
-    - Find the line `const API_KEY = "YOUR_API_KEY_HERE";`.
-    - Replace `"YOUR_API_KEY_HERE"` with your actual Google Gemini API key.
-
-    > **Security Warning**: Hardcoding API keys in your client-side source code is insecure and not recommended for production applications. Anyone who can access your site's files can find your key. For personal use or testing, this method is straightforward.
-
-### Local Setup & Running
-
-**Important**: This web application cannot be run by simply opening the `index.html` file in a browser due to security restrictions (`file://` protocol). It must be served by a web server.
-
-1.  **Install a local server:**
-    We will use `serve`, a simple static server. Open your terminal or command prompt and run:
-    ```sh
-    npm install -g serve
-    ```
-
-2.  **Start the server:**
-    From your project's root directory, run:
-    ```sh
-    serve
-    ```
-
-3.  **Access the application:**
-    The terminal will show you a "Local" address, typically `http://localhost:3000`. Open this URL in your web browser. The app should now be running.
+The application requires your Google Gemini API Key to function. This key must be available as an environment variable named `API_KEY` in the execution environment where you run the application. The application is designed to automatically pick it up from `process.env.API_KEY`.
 
 ---
 
@@ -95,24 +61,23 @@ You will also need a **Google Gemini API Key**. You can obtain one for free from
 
 This project can be deployed on a static hosting service like Netlify, Vercel, or GitHub Pages.
 
-**Critical Security Warning**: Since your API key is hardcoded in the source code, anyone who can access your deployed site's source files **will be able to see and use your API key**. This can lead to unexpected charges on your Google Cloud bill. Deploy public-facing sites with extreme caution and consider securing your key.
+**Important**: When deploying, you must configure your hosting provider's settings to include your `API_KEY` as an environment variable.
 
-### Critical Deployment Step: The `_redirects` file
+### Deployment Instructions (Example with Netlify)
 
-**This file is required to fix the "Page Not Found" error on Netlify.**
+1.  Push your code to your GitHub Repository.
+2.  Log in to Netlify and select "Add new site" -> "Import an existing project".
+3.  Connect your GitHub account and select your repository.
+4.  In the deployment settings:
+    - Go to "Site settings" -> "Build & deploy" -> "Environment".
+    - Add a new environment variable:
+      - **Key**: `API_KEY`
+      - **Value**: `YOUR_GEMINI_API_KEY_HERE`
+5.  Deploy the site. Netlify will make this variable available to the application.
 
-This project is a Single Page Application (SPA). The included `_redirects` file contains a rewrite rule that tells Netlify to serve `index.html` for all routes, allowing the React app to handle routing internally.
+### A note on the `_redirects` file
 
-### Deployment Instructions
-
-1.  **Push to your GitHub Repository:**
-    Make sure your latest code, with your API key included, is pushed to your GitHub repository.
-
-2.  **Deploy from a static hosting provider (e.g., Netlify):**
-    - Go to your provider, sign up or log in.
-    - Connect your GitHub account and select your repository.
-    - The build settings can usually be left as default. There is **no need to set environment variables** for the API key.
-    - Deploy the site.
+This project is a Single Page Application (SPA). The included `_redirects` file contains a rewrite rule that tells Netlify to serve `index.html` for all routes, allowing the React app to handle routing internally. This is required to prevent "Page Not Found" errors.
 
 ## Installing as a PWA on Your Phone
 
