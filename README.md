@@ -36,7 +36,7 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript
+- **Frontend**: React, TypeScript, Vite
 - **Styling**: TailwindCSS (via CDN)
 - **AI**: Google Gemini API (`@google/genai`)
 - **Web APIs**: WebRTC (getUserMedia), Web Speech API (SpeechRecognition, SpeechSynthesis)
@@ -53,31 +53,33 @@ You will need a **Google Gemini API Key**. You can obtain one for free from [Goo
 
 ### Configuration
 
-The application requires your Google Gemini API Key to function. This key must be available as an environment variable named `API_KEY` in the execution environment where you run the application. The application is designed to automatically pick it up from `process.env.API_KEY`.
+This application is built with Vite, which handles environment variables securely. To protect your API key, only variables prefixed with `VITE_` are exposed to the browser.
+
+You must configure an environment variable named `VITE_API_KEY` in your deployment environment for the application to work. The app will not function without it.
 
 ---
 
 ## Deployment
 
-This project can be deployed on a static hosting service like Netlify, Vercel, or GitHub Pages.
+This project is configured for seamless deployment on a static hosting service like Netlify, Vercel, or GitHub Pages.
 
-**Important**: When deploying, you must configure your hosting provider's settings to include your `API_KEY` as an environment variable.
+The repository includes a `netlify.toml` file which automatically configures the build settings:
+- **Build Command**: `npm run build`
+- **Publish Directory**: `dist`
+- **SPA Redirects**: Handles all routing for you.
+
+**Important**: When deploying, you must configure your hosting provider's settings to include your `VITE_API_KEY` as an environment variable.
 
 ### Deployment Instructions (Example with Netlify)
 
-1.  Push your code to your GitHub Repository.
+1.  Push your code to your GitHub Repository (including the `netlify.toml` file).
 2.  Log in to Netlify and select "Add new site" -> "Import an existing project".
-3.  Connect your GitHub account and select your repository.
-4.  In the deployment settings:
-    - Go to "Site settings" -> "Build & deploy" -> "Environment".
-    - Add a new environment variable:
-      - **Key**: `API_KEY`
-      - **Value**: `YOUR_GEMINI_API_KEY_HERE`
-5.  Deploy the site. Netlify will make this variable available to the application.
-
-### A note on the `_redirects` file
-
-This project is a Single Page Application (SPA). The included `_redirects` file contains a rewrite rule that tells Netlify to serve `index.html` for all routes, allowing the React app to handle routing internally. This is required to prevent "Page Not Found" errors.
+3.  Connect your GitHub account and select your repository. Netlify will automatically detect and use the settings from `netlify.toml`.
+4.  In the deployment settings, go to "Site settings" -> "Build & deploy" -> "Environment".
+5.  Add a new environment variable:
+    - **Key**: `VITE_API_KEY`
+    - **Value**: `YOUR_GEMINI_API_KEY_HERE`
+6.  Trigger a new deploy for the changes to take effect. Netlify will now correctly build your project and make the API key securely available to the application.
 
 ## Installing as a PWA on Your Phone
 
