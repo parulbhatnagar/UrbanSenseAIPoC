@@ -30,13 +30,14 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 - **Text-to-Speech (TTS)**: Reads analysis results aloud for clear, audible feedback in the selected language.
 - **Speech Recognition**: Allows for hands-free operation using voice commands (commands are in English).
 - **Progressive Web App (PWA)**: Installable on mobile devices for an app-like experience with offline capabilities for the user interface.
-- **Secure by Design**: Uses environment variables for API key management, ensuring your key is not exposed on the client-side.
+- **Secure by Design**: API calls are proxied through a secure serverless function, ensuring your API key is never exposed on the client-side.
 
 ---
 
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite
+- **Backend**: Netlify Functions (Serverless)
 - **Styling**: TailwindCSS (via CDN)
 - **AI**: Google Gemini API (`@google/genai`)
 - **Web APIs**: WebRTC (getUserMedia), Web Speech API (SpeechRecognition, SpeechSynthesis)
@@ -53,33 +54,30 @@ You will need a **Google Gemini API Key**. You can obtain one for free from [Goo
 
 ### Configuration
 
-This application is built with Vite, which handles environment variables securely. To protect your API key, only variables prefixed with `VITE_` are exposed to the browser.
+This application secures your API key by using a serverless backend function as a proxy. The client-side application never handles the key directly.
 
-You must configure an environment variable named `VITE_API_KEY` in your deployment environment for the application to work. The app will not function without it.
+For the application to work, you must configure an environment variable named `API_KEY` in your deployment environment.
 
 ---
 
 ## Deployment
 
-This project is configured for seamless deployment on a static hosting service like Netlify, Vercel, or GitHub Pages.
+This project is configured for seamless deployment on Netlify.
 
-The repository includes a `netlify.toml` file which automatically configures the build settings:
-- **Build Command**: `npm run build`
-- **Publish Directory**: `dist`
-- **SPA Redirects**: Handles all routing for you.
+The repository includes a `netlify.toml` file which automatically configures the build settings, serverless functions, and required Node.js version.
 
-**Important**: When deploying, you must configure your hosting provider's settings to include your `VITE_API_KEY` as an environment variable.
+**Important**: When deploying, you must configure your Netlify site settings to include your `API_KEY` as an environment variable. Using `VITE_API_KEY` will not work and is insecure.
 
-### Deployment Instructions (Example with Netlify)
+### Deployment Instructions for Netlify
 
-1.  Push your code to your GitHub Repository (including the `netlify.toml` file).
+1.  Push your code to your GitHub Repository.
 2.  Log in to Netlify and select "Add new site" -> "Import an existing project".
 3.  Connect your GitHub account and select your repository. Netlify will automatically detect and use the settings from `netlify.toml`.
 4.  In the deployment settings, go to "Site settings" -> "Build & deploy" -> "Environment".
 5.  Add a new environment variable:
-    - **Key**: `VITE_API_KEY`
+    - **Key**: `API_KEY`
     - **Value**: `YOUR_GEMINI_API_KEY_HERE`
-6.  Trigger a new deploy for the changes to take effect. Netlify will now correctly build your project and make the API key securely available to the application.
+6.  Trigger a new deploy for the changes to take effect. Netlify will now correctly build your project, deploy the secure serverless function, and make the API key securely available to that function.
 
 ## Installing as a PWA on Your Phone
 
