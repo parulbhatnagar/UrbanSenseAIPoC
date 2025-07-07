@@ -1,2 +1,8 @@
-// This file is intentionally left blank.
-// The use of import.meta.env has been removed from the project.
+interface ImportMetaEnv {
+  readonly VITE_API_KEY: string;
+  readonly DEV: boolean;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}

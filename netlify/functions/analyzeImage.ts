@@ -1,12 +1,12 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import type { Handler, HandlerEvent } from "@netlify/functions";
 
-// WARNING: Hardcoding API key. As per user request.
-const apiKey = "AIzaSyBuSZfhkBbyBCAM4Aw3JQF6cQYGbpEvBhw";
+// Securely access the API key from environment variables
+const apiKey = process.env.API_KEY;
 
 if (!apiKey) {
   // This error will be logged in the Netlify function logs.
-  throw new Error("The API_KEY is not set. A hardcoded key is expected.");
+  throw new Error("The API_KEY environment variable is not set in the Netlify build settings.");
 }
 
 const ai = new GoogleGenAI({ apiKey });
@@ -69,7 +69,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     
     let userMessage = "An error occurred while processing the image with the AI service.";
     if (errorMessage.includes('API key')) {
-        userMessage = "The AI service API key is invalid or missing. Please check the application configuration.";
+        userMessage = "The AI service API key is invalid or missing. Please check the application configuration on Netlify.";
     }
 
     return {
