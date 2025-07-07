@@ -2,10 +2,6 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { AssistanceTask } from '../types.ts';
 import { MOCK_RESPONSES } from '../constants.ts';
 
-// VITE_API_KEY will be embedded at build time. If it exists, we're in a local dev or preview environment.
-// If it's undefined, we're in a production environment like Netlify where we must use the serverless function.
-const localApiKey = import.meta.env?.VITE_API_KEY;
-
 const getMockResponse = (task: AssistanceTask): Promise<string> => {
     return new Promise(resolve => {
         setTimeout(() => {
@@ -15,13 +11,10 @@ const getMockResponse = (task: AssistanceTask): Promise<string> => {
     });
 };
 
-const callApiFromClient = async (base64Image: string, prompt: string): Promise<string> => {
-    if (!localApiKey) {
-        // This should not happen if the logic in analyzeImageWithGemini is correct
-        throw new Error("VITE_API_KEY is not defined in your .env file for local development.");
-    }
+// This function will only be bundled in development mode due to tree-shaking.
+const callApiFromClient = async (base64Image: string, prompt: string, apiKey: string): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: localApiKey });
+        const ai = new GoogleGenAI({ apiKey });
         const imagePart = { inlineData: { mimeType: "image/jpeg", data: base64Image } };
         const textPart = { text: prompt };
 
@@ -74,11 +67,20 @@ export const analyzeImageWithGemini = async (base64Image: string, prompt: string
         return getMockResponse(task);
     }
     
-    // For local development or preview where a VITE_API_KEY is available, call the API from the client.
-    if (localApiKey) {
-        return callApiFromClient(base64Image, prompt);
+    // In development mode (`npm run dev`), `import.meta.env.DEV` is true.
+    // In production builds (`npm run build`), it is false. This allows Vite to tree-shake
+    // the `if` block, removing `callApiFromClient` and any reference to `VITE_API_KEY`
+    // from the production bundle, which solves the Netlify secret scanning error.
+    if (import.meta.env.DEV) {
+        const localApiKey = import.meta.env.VITE_API_KEY;
+        if (localApiKey) {
+            console.log("DEV mode: Using client-side API call.");
+            return callApiFromClient(base64Image, prompt, localApiKey);
+        } else {
+             console.warn("DEV mode: VITE_API_KEY not found in .env file. Falling back to serverless function. This will likely not work locally unless you are running the Netlify dev server.");
+        }
     }
     
-    // For production on Netlify (where VITE_API_KEY is not set), use the secure serverless function.
+    // In production, or if localApiKey is not set in dev, use the secure serverless function.
     return callApiFromServerless(base64Image, prompt);
 };
