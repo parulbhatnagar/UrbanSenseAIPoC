@@ -1,45 +1,55 @@
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { AssistanceTask } from '../types.ts';
+import { MOCK_RESPONSES } from '../constants.ts';
 
-export const analyzeImageWithGemini = async (base64Image: string, prompt: string): Promise<string> => {
+// WARNING: Hardcoding API keys in client-side code is a security risk.
+// This key is visible to anyone inspecting the app's code.
+// This has been done as per user request for simplicity across all environments.
+const API_KEY = "AIzaSyBuSZfhkBbyBCAM4Aw3JQF6cQYGbpEvBhw";
+
+const getMockResponse = (task: AssistanceTask): Promise<string> => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const mockText = MOCK_RESPONSES[task] || "This is a mock response for an unknown task.";
+            resolve(`(Mock Response) ${mockText}`);
+        }, 1500); // Simulate network delay
+    });
+};
+
+export const analyzeImageWithGemini = async (base64Image: string, prompt: string, task: AssistanceTask, isMockMode: boolean): Promise<string> => {
+  if (isMockMode) {
+    return getMockResponse(task);
+  }
+
+  if (!API_KEY) {
+      return "API Key is not configured. A hardcoded key is expected in services/geminiService.ts.";
+  }
+
   try {
-    const response = await fetch('/.netlify/functions/analyzeImage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ base64Image, prompt }),
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
+    
+    const imagePart = {
+        inlineData: { mimeType: "image/jpeg", data: base64Image },
+    };
+    const textPart = { text: prompt };
+
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-preview-04-17',
+        contents: { parts: [imagePart, textPart] },
+        config: { thinkingConfig: { thinkingBudget: 0 } },
     });
 
-    // Check if the response is not OK and try to parse the error.
-    if (!response.ok) {
-        let errorMsg = 'An unknown server error occurred.';
-        try {
-            const errorData = await response.json();
-            errorMsg = errorData.error || `Server responded with status: ${response.status}`;
-        } catch (e) {
-            errorMsg = `Server responded with status: ${response.status}. Could not parse error response.`;
-        }
-
-        console.error("Error from serverless function:", errorMsg);
-
-        // Provide user-friendly messages for common errors.
-        if (response.status >= 500) {
-            return "The AI service is currently unavailable or experiencing issues. Please try again later.";
-        }
-        if (response.status === 401 || response.status === 403) {
-            return "The application is not authorized to use the AI service. Please check the API key configuration.";
-        }
-        return "An unexpected error occurred while communicating with the AI service.";
-    }
-
-    const data = await response.json();
-    if (!data.text) {
+    const text = response.text;
+    if (!text) {
         return "The AI service returned an empty response. Please try again.";
     }
-    return data.text;
-
+    return text;
   } catch (error) {
-    console.error("Network or other error calling analyzeImage function:", error);
-    // This catches network errors etc.
-    return "Failed to connect to the analysis service. Please check your internet connection and try again.";
+      console.error("Error calling Gemini API:", error);
+      let errorMessage = "An error occurred while calling the Gemini API. Check the console for details.";
+      if (error instanceof Error && (error.message.includes('API key') || error.message.includes('permission'))) {
+          errorMessage = "The provided API key is invalid or has insufficient permissions. Please check the hardcoded key.";
+      }
+      return errorMessage;
   }
 };

@@ -38,3 +38,10 @@ export const TASK_PROMPTS: Record<AssistanceTask, { prompt: string }> = {
     prompt: `${baseSystemInstruction} Scan the image for any shopfronts or business signs. Read the names of any shops you can identify, and you MUST estimate their distance and direction. For example: 'I see a sign for Starbucks about 10 meters ahead and to your right.' If you cannot identify any shops, state 'I do not see any shop signs.'`
   }
 };
+
+export const MOCK_RESPONSES: Record<AssistanceTask, string> = {
+  [AssistanceTask.FIND_BUS]: "I see bus number 123 to 'City Center' arriving on your right in about 15 meters.",
+  [AssistanceTask.CROSS_ROAD]: "The pedestrian signal is green, it is safe to cross. A blue car is waiting on your left.",
+  [AssistanceTask.EXPLORE]: "You are on a sidewalk next to a park. There is a bench 5 meters in front of you and a trash can to your right.",
+  [AssistanceTask.FIND_SHOP]: "I can see a 'Corner Coffee Shop' about 20 meters ahead and to your left."
+};

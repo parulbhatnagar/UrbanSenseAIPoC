@@ -6,9 +6,11 @@ interface SettingsModalProps {
   onClose: () => void;
   currentLangCode: string;
   onLangChange: (langCode: string) => void;
+  isMockMode: boolean;
+  onMockModeChange: (enabled: boolean) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentLangCode, onLangChange }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentLangCode, onLangChange, isMockMode, onMockModeChange }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Close modal on Escape key press
@@ -68,6 +70,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentL
               </label>
             ))}
           </div>
+        </fieldset>
+
+        <fieldset className="mt-6 pt-4 border-t border-gray-700">
+            <legend className="text-lg font-semibold mb-3">Developer</legend>
+            <label htmlFor="mock-toggle" className="flex items-center justify-between p-3 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors">
+                <div>
+                  <span className="text-md font-medium text-white">Enable Mock Mode</span>
+                  <p className="text-sm text-gray-400 mt-1">Simulates AI responses for testing without an API key.</p>
+                </div>
+                <div className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    id="mock-toggle" 
+                    className="sr-only peer"
+                    checked={isMockMode}
+                    onChange={(e) => onMockModeChange(e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-teal-300 peer-focus:ring-opacity-50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                </div>
+            </label>
         </fieldset>
 
         <div className="mt-6 text-right">

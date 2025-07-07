@@ -1,12 +1,12 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import type { Handler, HandlerEvent } from "@netlify/functions";
 
-// Securely access the API key from environment variables on the server.
-const apiKey = process.env.API_KEY;
+// WARNING: Hardcoding API key. As per user request.
+const apiKey = "AIzaSyBuSZfhkBbyBCAM4Aw3JQF6cQYGbpEvBhw";
 
 if (!apiKey) {
   // This error will be logged in the Netlify function logs.
-  throw new Error("The API_KEY environment variable is not set.");
+  throw new Error("The API_KEY is not set. A hardcoded key is expected.");
 }
 
 const ai = new GoogleGenAI({ apiKey });

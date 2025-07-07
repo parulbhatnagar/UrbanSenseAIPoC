@@ -97,6 +97,10 @@ function App() {
     const savedLangIndex = localStorage.getItem('urbanSenseLanguageIndex');
     return savedLangIndex ? parseInt(savedLangIndex, 10) : 0;
   });
+  const [isMockMode, setIsMockMode] = useState(() => {
+    const savedMockMode = localStorage.getItem('urbanSenseMockMode');
+    return savedMockMode ? JSON.parse(savedMockMode) : false;
+  });
   
   const currentLang = LANGUAGES[languageIndex];
   const currentStrings = UI_STRINGS[currentLang.code];
@@ -124,7 +128,7 @@ function App() {
 
     const base64Image = cameraRef.current?.captureFrame();
 
-    if (!base64Image) {
+    if (!base64Image && !isMockMode) {
       const errorMsg = 'Could not capture an image from the camera.';
       setError(errorMsg);
       setLastResponse(errorMsg);
@@ -134,12 +138,12 @@ function App() {
     }
 
     const prompt = `${TASK_PROMPTS[task].prompt} Please respond in ${currentLang.name}.`;
-    const result = await analyzeImageWithGemini(base64Image, prompt);
+    const result = await analyzeImageWithGemini(base64Image || '', prompt, task, isMockMode);
 
     setLastResponse(result);
     speak(result, currentLang.code);
     setIsProcessing(null);
-  }, [isProcessing, isSpeaking, speak, currentLang, currentStrings]);
+  }, [isProcessing, isSpeaking, speak, currentLang, currentStrings, isMockMode]);
   
   const handleCameraError = useCallback((errorMessage: string) => {
     setError(errorMessage);
@@ -213,6 +217,11 @@ function App() {
     }
   };
 
+  const handleMockModeChange = (enabled: boolean) => {
+    setIsMockMode(enabled);
+    localStorage.setItem('urbanSenseMockMode', JSON.stringify(enabled));
+  };
+
   return (
     <div className="h-dvh w-screen bg-gray-900 text-white relative font-sans overflow-hidden">
       {!isSessionActive ? (
@@ -253,6 +262,8 @@ function App() {
             onClose={() => setIsSettingsOpen(false)}
             currentLangCode={currentLang.code}
             onLangChange={handleLanguageChange}
+            isMockMode={isMockMode}
+            onMockModeChange={handleMockModeChange}
           />
           
           <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-60 backdrop-blur-sm z-10">

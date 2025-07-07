@@ -15,6 +15,7 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
+- [Running Locally](#running-locally)
 - [Deployment](#deployment)
 - [Installing as a PWA](#installing-as-a-pwa-on-your-phone)
 - [Contributing](#contributing)
@@ -30,15 +31,13 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 - **Text-to-Speech (TTS)**: Reads analysis results aloud for clear, audible feedback in the selected language.
 - **Speech Recognition**: Allows for hands-free operation using voice commands (commands are in English).
 - **Progressive Web App (PWA)**: Installable on mobile devices for an app-like experience with offline capabilities for the user interface.
-- **Secure by Design**: API calls are proxied through a secure serverless function, ensuring your API key is never exposed on the client-side.
+- **Simplified Setup**: API key is hardcoded for easy setup across all environments. **Note:** This is generally not recommended for production applications.
 
 ---
 
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite
-- **Backend**: Netlify Functions (Serverless)
-- **Styling**: TailwindCSS (via CDN)
 - **AI**: Google Gemini API (`@google/genai`)
 - **Web APIs**: WebRTC (getUserMedia), Web Speech API (SpeechRecognition, SpeechSynthesis)
 - **PWA**: Service Workers, Web App Manifest
@@ -48,36 +47,35 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 
 ## Getting Started
 
-### Prerequisites
+The application is configured to work out-of-the-box with a hardcoded API key.
 
-You will need a **Google Gemini API Key**. You can obtain one for free from [Google AI Studio](https://aistudio.google.com/app/apikey).
+---
 
-### Configuration
+## Running Locally
 
-This application secures your API key by using a serverless backend function as a proxy. The client-side application never handles the key directly.
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
 
-For the application to work, you must configure an environment variable named `API_KEY` in your deployment environment.
+2.  **Run the Development Server:**
+    ```bash
+    npm run dev
+    ```
+    The application will be available at the address shown in your terminal (usually `http://localhost:5173`).
 
 ---
 
 ## Deployment
 
-This project is configured for seamless deployment on Netlify.
-
-The repository includes a `netlify.toml` file which automatically configures the build settings, serverless functions, and required Node.js version.
-
-**Important**: When deploying, you must configure your Netlify site settings to include your `API_KEY` as an environment variable. Using `VITE_API_KEY` will not work and is insecure.
+This project is configured for seamless deployment on Netlify. Since the API key is hardcoded, no environment variables need to be configured on the server.
 
 ### Deployment Instructions for Netlify
 
 1.  Push your code to your GitHub Repository.
 2.  Log in to Netlify and select "Add new site" -> "Import an existing project".
 3.  Connect your GitHub account and select your repository. Netlify will automatically detect and use the settings from `netlify.toml`.
-4.  In the deployment settings, go to "Site settings" -> "Build & deploy" -> "Environment".
-5.  Add a new environment variable:
-    - **Key**: `API_KEY`
-    - **Value**: `YOUR_GEMINI_API_KEY_HERE`
-6.  Trigger a new deploy for the changes to take effect. Netlify will now correctly build your project, deploy the secure serverless function, and make the API key securely available to that function.
+4.  Deploy the site. No further configuration is needed.
 
 ## Installing as a PWA on Your Phone
 
