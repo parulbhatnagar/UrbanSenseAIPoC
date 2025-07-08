@@ -22,7 +22,10 @@ export const useTextToSpeech = () => {
   useEffect(() => {
     const updateVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
-      setVoices(availableVoices);
+      if (availableVoices.length > 0) {
+        setVoices(availableVoices);
+        console.log('Available TTS voices:', availableVoices.map(v => ({ name: v.name, lang: v.lang, default: v.default })));
+      }
     };
 
     // The 'voiceschanged' event fires when the voice list has been loaded and is ready.
@@ -65,18 +68,20 @@ export const useTextToSpeech = () => {
         // Find the best available voice for the requested language.
         // First, try for an exact match (e.g., 'en-US').
         let voice = voices.find(v => v.lang === lang);
+        
+        // If no exact match, try for a partial match on the primary language (e.g., 'en').
+        // This helps on devices that may have 'en-GB' but not 'en-US'.
         if (!voice) {
-          // If no exact match, try for a partial match on the primary language (e.g., 'en').
-          // This helps on devices that may have 'en-GB' but not 'en-US'.
           const langPrefix = lang.split('-')[0];
           voice = voices.find(v => v.lang.startsWith(langPrefix));
         }
         
         if (voice) {
+          console.log(`TTS: Found voice '${voice.name}' for language '${lang}'.`);
           utterance.voice = voice;
         } else if (voices.length > 0) {
           // If no specific voice is found, log a warning and let the browser use its default.
-          console.warn(`No specific voice found for language '${lang}'. The browser will use its default.`);
+          console.warn(`TTS: No specific voice found for language '${lang}'. The browser will use its default.`);
         }
         
         // --- Event Handlers for the Utterance ---
