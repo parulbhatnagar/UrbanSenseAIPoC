@@ -19,7 +19,7 @@ const callApiFromClient = async (base64Image: string, prompt: string, apiKey: st
         const textPart = { text: prompt };
 
         const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-preview-04-17',
+            model: 'gemini-2.5-flash',
             contents: { parts: [imagePart, textPart] },
             config: { thinkingConfig: { thinkingBudget: 0 } },
         });
@@ -81,6 +81,6 @@ export const analyzeImageWithGemini = async (base64Image: string, prompt: string
         }
     }
     
-    // In production, or if localApiKey is not set in dev, use the secure serverless function.
+    // In production, or if a localApiKey is not set in dev, use the secure serverless function.
     return callApiFromServerless(base64Image, prompt);
 };
