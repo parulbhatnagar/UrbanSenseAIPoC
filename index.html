@@ -3,20 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  
+  <!-- Sets the viewport to ensure the app scales correctly on all devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UrbanSenseAI</title>
 
-  <!-- PWA Manifest & Theme -->
+  <!-- PWA Manifest & Theme Color -->
+  <!-- The manifest file provides metadata for the PWA, like its name, icons, and display mode. -->
   <link rel="manifest" href="/manifest.json" />
+  <!-- Sets the theme color for the browser's address bar. -->
   <meta name="theme-color" content="#14b8a6">
   
-  <!-- iOS PWA Tags -->
+  <!-- iOS Specific PWA Tags for a native-like experience on Apple devices -->
+  <!-- Sets the icon for the app when added to the home screen on iOS. -->
   <link rel="apple-touch-icon" href="/vite.svg" />
+  <!-- Allows the app to run in full-screen mode. -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <!-- Sets the status bar style (e.g., black, white, or translucent). -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- Sets the app title when added to the home screen on iOS. -->
   <meta name="apple-mobile-web-app-title" content="UrbanSense" />
 
+  <!-- Tailwind CSS via CDN for rapid UI development without a build step for CSS. -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 
+    Import Map: This allows us to use bare module specifiers (e.g., 'import React from "react"') 
+    directly in the browser without a complex build setup. It maps module names to their full URLs.
+    This is key to the project's "no-build-step" local development experience with Vite.
+  -->
 <script type="importmap">
 {
   "imports": {
@@ -34,7 +49,10 @@
 <link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-gray-900 text-white">
+  <!-- The root element where the React application will be mounted. -->
   <div id="root"></div>
+  
+  <!-- The main entry point for the application's JavaScript. 'type="module"' enables ES6 modules. -->
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
