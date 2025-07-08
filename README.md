@@ -13,6 +13,7 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 ## Table of Contents
 
 - [Features](#features)
+- [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [API Key Setup](#api-key-setup)
 - [Running Locally](#running-locally)
@@ -32,6 +33,12 @@ UrbanSenseAI is a progressive web application (PWA) designed to assist visually 
 - **Speech Recognition**: Allows for hands-free operation using voice commands (commands are in English).
 - **Progressive Web App (PWA)**: Installable on mobile devices for an app-like experience with offline capabilities for the user interface.
 - **Secure API Handling**: Protects your API key by using a serverless function in production.
+
+---
+
+## Architecture
+
+For a detailed explanation of the system's design, data flow, and component structure, please see the **[Architecture Document](./ARCHITECTURE.md)**.
 
 ---
 

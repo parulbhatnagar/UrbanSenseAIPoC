@@ -1,8 +1,11 @@
-
 {
+  "//": "This is the Web App Manifest file. It provides information about the application (like its name, author, icon, and description) in a JSON text file. It is a core component of a Progressive Web App (PWA).",
+  
   "short_name": "UrbanSense",
   "name": "UrbanSenseAI",
   "description": "An agentic AI application to help visually impaired individuals navigate urban environments.",
+  
+  "//": "'icons' defines a set of icons for the browser to use for the PWA on the home screen, in the app launcher, etc. Different sizes are provided for different contexts.",
   "icons": [
     {
       "src": "/vite.svg",
@@ -29,10 +32,20 @@
       "purpose": "maskable"
     }
   ],
+  
+  "//": "'start_url' is the preferred URL that should be loaded when the user launches the web application.",
   "start_url": "/",
   "scope": "/",
+  
+  "//": "'display': 'standalone' makes the web application look and feel like a standalone, native application. It opens in its own window, without any browser UI (like an address bar).",
   "display": "standalone",
+  
+  "//": "'orientation' defines the default orientation for the web application.",
   "orientation": "portrait-primary",
+  
+  "//": "'theme_color' defines the default color for the application's toolbar or address bar.",
   "theme_color": "#14b8a6",
+  
+  "//": "'background_color' defines a placeholder background color for the application page to display before its stylesheet is loaded.",
   "background_color": "#111827"
 }

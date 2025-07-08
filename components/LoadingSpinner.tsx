@@ -1,6 +1,18 @@
+/**
+ * @file LoadingSpinner.tsx
+ * This component provides a simple, reusable SVG-based loading spinner.
+ * It's used to give visual feedback to the user during asynchronous operations,
+ * such as when waiting for an AI analysis to complete.
+ */
 
 import React from 'react';
 
+/**
+ * A functional component that renders an animated SVG spinner.
+ * It uses Tailwind CSS classes for styling and animation.
+ * The `aria-label="Loading"` attribute improves accessibility by informing
+ * screen reader users that content is being loaded.
+ */
 const LoadingSpinner: React.FC = () => {
   return (
     <div className="flex justify-center items-center" aria-label="Loading">

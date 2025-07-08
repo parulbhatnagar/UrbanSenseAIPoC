@@ -1,3 +1,13 @@
+/**
+ * @file App.tsx
+ * This is the main root component of the UrbanSenseAI application.
+ * It orchestrates all the major parts of the app, including:
+ * - Managing the overall application state (e.g., loading, speaking, listening).
+ * - Integrating custom hooks for camera, location, text-to-speech, and speech-recognition.
+ * - Handling user interactions and triggering AI analysis.
+ * - Rendering the main UI components like the camera view, action buttons, and settings.
+ */
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { AssistanceTask } from './types.ts';
 import { TASK_PROMPTS, TASK_LABELS } from './constants.ts';
@@ -8,6 +18,10 @@ import { useLocation } from './hooks/useLocation.ts';
 import CameraView, { CameraViewHandles } from './components/CameraView.tsx';
 import ActionButton from './components/ActionButton.tsx';
 import SettingsModal from './components/SettingsModal.tsx';
+
+// --- SVG Icon Components --- //
+// These are simple, self-contained functional components that render SVG icons.
+// They accept a `className` prop to allow for flexible styling via Tailwind CSS.
 
 const BusIcon: React.FC<{className: string}> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -24,367 +38,257 @@ const CrosswalkIcon: React.FC<{className: string}> = ({ className }) => (
 
 const ExploreIcon: React.FC<{className: string}> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clipRule="evenodd" />
+        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
     </svg>
 );
 
 const ShopIcon: React.FC<{className: string}> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.25 3.75A1.5 1.5 0 0 1 12.75 3h6A1.5 1.5 0 0 1 20.25 4.5v6.5a1.5 1.5 0 0 1-1.5 1.5h-1.5a1.5 1.5 0 0 0-1.5 1.5v3.375a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5V14.25a1.5 1.5 0 0 0-1.5-1.5h-1.5A1.5 1.5 0 0 1 3.75 11V4.5A1.5 1.5 0 0 1 5.25 3h6ZM18.75 6H14.25v5.25h2.25a2.25 2.25 0 0 0 2.25-2.25V6ZM12.75 6H5.25v5.25H9a2.25 2.25 0 0 0 2.25-2.25V6Z" />
+        <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4L3 12v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
     </svg>
 );
 
-const MicrophoneIcon: React.FC<{ className: string }> = ({ className }) => (
+const SettingsIcon: React.FC<{className: string}> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 18.75a6.75 6.75 0 0 0 6.75-6.75V6.75a6.75 6.75 0 0 0-13.5 0v5.25A6.75 6.75 0 0 0 12 18.75Z" />
-        <path d="M4.125 12a.75.75 0 0 0-1.5 0v.345a8.25 8.25 0 0 0 8.25 8.25h.15a8.25 8.25 0 0 0 8.25-8.25V12a.75.75 0 0 0-1.5 0v.345a6.75 6.75 0 0 1-6.75 6.75h-.15a6.75 6.75 0 0 1-6.75-6.75V12Z" />
-    </svg>
-);
-
-const SettingsIcon: React.FC<{ className: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 5.85c-.09.55-.554.95-1.105.95H4.125a2.25 2.25 0 0 0-2.25 2.25v.82a2.25 2.25 0 0 0 2.25 2.25h3.82a1.125 1.125 0 0 1 1.105.95l.178 2.141a1.875 1.875 0 0 0 1.85 1.567h1.844c.917 0 1.699-.663 1.85-1.567l.178-2.141a1.125 1.125 0 0 1 1.105-.95h3.82a2.25 2.25 0 0 0 2.25-2.25v-.82a2.25 2.25 0 0 0-2.25-2.25h-3.82a1.125 1.125 0 0 1-1.105-.95l-.178-2.141A1.875 1.875 0 0 0 12.922 2.25H11.078ZM12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Z" clipRule="evenodd" />
-    </svg>
-);
-
-const LocationPinIcon: React.FC<{ className: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path fillRule="evenodd" d="M11.54 22.35a.75.75 0 0 1-1.08 0l-6.75-6.75a.75.75 0 0 1 .02-1.06l.12-.12a.75.75 0 0 1 1.06 0l5.5 5.5 10.38-10.38a.75.75 0 0 1 1.06 0l.12.12a.75.75 0 0 1 0 1.06l-11.25 11.25Z" clipRule="evenodd" />
+        <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17-.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
     </svg>
 );
 
 
-const TASK_CONFIG = {
-    [AssistanceTask.FIND_BUS]: { Icon: BusIcon },
-    [AssistanceTask.CROSS_ROAD]: { Icon: CrosswalkIcon },
-    [AssistanceTask.EXPLORE]: { Icon: ExploreIcon },
-    [AssistanceTask.FIND_SHOP]: { Icon: ShopIcon },
-};
-
+// --- Language & UI String Definitions --- //
+// This data structure holds all localizable content for the app.
 export const LANGUAGES = [
   { code: 'en-US', name: 'English' },
-  { code: 'hi-IN', name: 'Hindi' },
-  { code: 'es-ES', name: 'Spanish' }
+  { code: 'hi-IN', name: 'हिन्दी (Hindi)' },
+  { code: 'es-ES', name: 'Español (Spanish)' },
 ];
 
-const UI_STRINGS: Record<string, any> = {
+const UI_STRINGS: Record<string, { [key: string]: string }> = {
     'en-US': {
-        welcome: 'Session started. Tap a task or use the voice command button.',
-        analyzing: (label: string) => `Analyzing for: ${label}...`,
-        listening: 'Listening for a command...',
-        iHeard: (command: string) => `I heard: "${command}"`,
-        commandSorry: "Sorry, I didn't recognize that command. Please say 'find bus', 'cross road', 'explore', or 'find shop'.",
-        useVoice: "Use Voice",
-        listeningButton: "Listening...",
-        whatShop: "What kind of shop are you looking for?",
-        locationAcquiring: "Acquiring location...",
-        locationStatus: (status: string) => `Location status: ${status}`
+        'status_initializing': "Initializing...",
+        'status_ready': "Ready. Select a task.",
+        'status_processing': "Analyzing...",
+        'status_location': "Acquiring location...",
+        'status_listening': "Listening...",
+        'shop_prompt': "What kind of shop are you looking for?",
     },
     'hi-IN': {
-        welcome: 'सत्र शुरू हो गया है। किसी कार्य पर टैप करें या वॉयस कमांड बटन का उपयोग करें।',
-        analyzing: (label: string) => `${label} के लिए विश्लेषण किया जा रहा है...`,
-        listening: 'एक कमांड की प्रतीक्षा है...',
-        iHeard: (command: string) => `मैंने सुना: "${command}"`,
-        commandSorry: "क्षमा करें, मुझे वह आदेश समझ नहीं आया। कृपया 'find bus', 'cross road', 'explore', या 'find shop' कहें।",
-        useVoice: "आवाज़ का प्रयोग करें",
-        listeningButton: "सुन रहा है...",
-        whatShop: "आप किस तरह की दुकान ढूंढ रहे हैं?",
-        locationAcquiring: "स्थान प्राप्त किया जा रहा है...",
-        locationStatus: (status: string) => `स्थान स्थिति: ${status}`
+        'status_initializing': "शुरू हो रहा है...",
+        'status_ready': "तैयार। एक कार्य चुनें।",
+        'status_processing': "विश्लेषण हो रहा है...",
+        'status_location': "स्थान प्राप्त हो रहा है...",
+        'status_listening': "सुन रहा है...",
+        'shop_prompt': "आप किस तरह की दुकान ढूंढ रहे हैं?",
     },
     'es-ES': {
-        welcome: 'Sesión iniciada. Toque una tarea o use el botón de comando de voz.',
-        analyzing: (label: string) => `Analizando para: ${label}...`,
-        listening: 'Escuchando un comando...',
-        iHeard: (command: string) => `Escuché: "${command}"`,
-        commandSorry: "Lo siento, no reconocí ese comando. Por favor, di 'find bus', 'cross road', 'explore', o 'find shop'.",
-        useVoice: "Usar Voz",
-        listeningButton: "Escuchando...",
-        whatShop: "¿Qué tipo de tienda estás buscando?",
-        locationAcquiring: "Adquiriendo ubicación...",
-        locationStatus: (status: string) => `Estado de la ubicación: ${status}`
+        'status_initializing': "Inicializando...",
+        'status_ready': "Listo. Seleccione una tarea.",
+        'status_processing': "Analizando...",
+        'status_location': "Adquiriendo ubicación...",
+        'status_listening': "Escuchando...",
+        'shop_prompt': "¿Qué tipo de tienda estás buscando?",
     }
 };
 
-function App() {
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [isProcessing, setIsProcessing] = useState<AssistanceTask | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isWaitingForShopQuery, setIsWaitingForShopQuery] = useState(false);
-  const [languageIndex, setLanguageIndex] = useState(() => {
-    const savedLangIndex = localStorage.getItem('urbanSenseLanguageIndex');
-    return savedLangIndex ? parseInt(savedLangIndex, 10) : 0;
-  });
-  const [isMockMode, setIsMockMode] = useState(() => {
-    const savedMockMode = localStorage.getItem('urbanSenseMockMode');
-    return savedMockMode ? JSON.parse(savedMockMode) : false;
-  });
-  
-  const currentLang = LANGUAGES[languageIndex];
-  const currentStrings = UI_STRINGS[currentLang.code];
-  
-  const [lastResponse, setLastResponse] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const cameraRef = useRef<CameraViewHandles>(null);
-  const { speak, isSpeaking } = useTextToSpeech();
-  const { location, error: locationError, isRequesting: isRequestingLocation, requestLocation } = useLocation();
 
-  const handleStartSession = useCallback(() => {
-    setIsSessionActive(true);
-    requestLocation();
-    const welcomeMsg = currentStrings.welcome;
-    setLastResponse(welcomeMsg);
-    speak(welcomeMsg, currentLang.code);
-  }, [speak, currentStrings, requestLocation]);
-  
-  const handleTaskSelect = useCallback(async (task: AssistanceTask, query: string = '') => {
-    if (isProcessing || isSpeaking) return;
-
-    setError('');
-    setIsProcessing(task);
-    const analyzingText = currentStrings.analyzing(TASK_LABELS[currentLang.code][task]);
-    setLastResponse(analyzingText);
-    speak(analyzingText, currentLang.code);
-
-    const base64Image = cameraRef.current?.captureFrame();
-
-    if (!base64Image && !isMockMode) {
-      const errorMsg = 'Could not capture an image from the camera.';
-      setError(errorMsg);
-      setLastResponse(errorMsg);
-      speak(errorMsg, currentLang.code);
-      setIsProcessing(null);
-      return;
-    }
-
-    let prompt = TASK_PROMPTS[task].prompt;
-    if (task === AssistanceTask.FIND_SHOP && query) {
-        prompt = `The user is looking for a "${query}". ` + prompt;
-    }
+const App: React.FC = () => {
+    // --- State Management ---
+    // Tracks which task is currently being processed (or null if none).
+    const [isProcessing, setIsProcessing] = useState<AssistanceTask | null>(null);
+    // The message displayed in the status bar at the top of the screen.
+    const [statusMessage, setStatusMessage] = useState(UI_STRINGS['en-US']['status_initializing']);
+    // Controls the visibility of the settings modal.
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    // The currently selected language code for UI text and speech.
+    const [currentLangCode, setCurrentLangCode] = useState('en-US');
+    // Toggles between using real AI and mock responses for testing.
+    const [isMockMode, setIsMockMode] = useState(false);
+    // Stores any error message related to the camera.
+    const [cameraError, setCameraError] = useState<string | null>(null);
     
-    const locationInfo = location ? `My current GPS location is latitude ${location.latitude}, longitude ${location.longitude}. ` : '';
-    const fullPrompt = `${locationInfo}${prompt} Please respond in ${currentLang.name}.`;
-    
-    const result = await analyzeImageWithGemini(base64Image || '', fullPrompt, task, isMockMode);
+    // --- Refs ---
+    // A ref to the CameraView component instance to call its `captureFrame` method.
+    const cameraRef = useRef<CameraViewHandles>(null);
+    // A ref to store which task triggered a speech recognition request (e.g., FIND_SHOP).
+    const activeTaskRef = useRef<AssistanceTask | null>(null);
 
-    setLastResponse(result);
-    speak(result, currentLang.code);
-    setIsProcessing(null);
-  }, [isProcessing, isSpeaking, speak, currentLang, currentStrings, isMockMode, location]);
-  
-  const handleCameraError = useCallback((errorMessage: string) => {
-    setError(errorMessage);
-    setLastResponse(errorMessage);
-    speak(errorMessage, currentLang.code);
-  }, [speak, currentLang.code]);
+    // --- Custom Hooks ---
+    const { speak, isSpeaking } = useTextToSpeech();
+    const { location, error: locationError, isRequesting: isRequestingLocation, requestLocation } = useLocation();
 
-  const handleVoiceCommand = useCallback((command: string) => {
-    const lowerCaseCommand = command.toLowerCase();
-    setLastResponse(currentStrings.iHeard(command));
-
-    let task: AssistanceTask | null = null;
-    if (lowerCaseCommand.includes('bus')) {
-      task = AssistanceTask.FIND_BUS;
-    } else if (lowerCaseCommand.includes('cross') || lowerCaseCommand.includes('road')) {
-      task = AssistanceTask.CROSS_ROAD;
-    } else if (lowerCaseCommand.includes('explore') || lowerCaseCommand.includes('around')) {
-      task = AssistanceTask.EXPLORE;
-    } else if (lowerCaseCommand.includes('shop') || lowerCaseCommand.includes('store')) {
-      task = AssistanceTask.FIND_SHOP;
-    }
-
-    if (task) {
-        if (task === AssistanceTask.FIND_SHOP) {
-            handleInitiateShopSearch();
-        } else {
-            handleTaskSelect(task);
+    /**
+     * The main function to perform AI analysis.
+     * It captures an image, constructs the correct prompt, and calls the Gemini service.
+     */
+    const runAnalysis = useCallback(async (task: AssistanceTask, userQuery: string | null = null) => {
+        if (!cameraRef.current) return;
+        
+        setStatusMessage(UI_STRINGS[currentLangCode]['status_processing']);
+        setIsProcessing(task);
+        
+        const base64Image = cameraRef.current.captureFrame();
+        if (!base64Image) {
+            const errorMsg = "Failed to capture image.";
+            setStatusMessage(errorMsg);
+            speak(errorMsg, currentLangCode);
+            setIsProcessing(null);
+            return;
         }
-    } else {
-      const sorryMsg = currentStrings.commandSorry;
-      setLastResponse(sorryMsg);
-      speak(sorryMsg, currentLang.code);
-    }
-  }, [handleTaskSelect, speak, currentLang, currentStrings]);
 
-  const handleShopQueryResponse = useCallback((query: string) => {
-    setLastResponse(currentStrings.iHeard(query));
-    setIsWaitingForShopQuery(false);
-    handleTaskSelect(AssistanceTask.FIND_SHOP, query);
-  }, [handleTaskSelect, currentStrings]);
+        // Construct the final prompt.
+        let prompt = TASK_PROMPTS[task].prompt;
+        // Append a user query if provided (for FIND_SHOP task).
+        if (task === AssistanceTask.FIND_SHOP && userQuery) {
+            prompt += ` The user is looking for: "${userQuery}".`;
+        }
+        // Append GPS coordinates if available for better contextual awareness.
+        if (location) {
+            prompt += ` Current GPS coordinates are Latitude: ${location.latitude}, Longitude: ${location.longitude}.`;
+        }
 
-  const handleVoiceResult = useCallback((transcript: string) => {
-    if (isWaitingForShopQuery) {
-        handleShopQueryResponse(transcript);
-    } else {
-        handleVoiceCommand(transcript);
-    }
-  }, [isWaitingForShopQuery, handleShopQueryResponse, handleVoiceCommand]);
+        // Call the Gemini service.
+        const result = await analyzeImageWithGemini(base64Image, prompt, task, isMockMode);
+        
+        // Update the UI and speak the result.
+        setStatusMessage(result);
+        await speak(result, currentLangCode);
+        
+        // Reset the processing state.
+        setIsProcessing(null);
+    }, [currentLangCode, location, isMockMode, speak]);
 
-  const { isListening, error: speechError, startListening } = useSpeechRecognition(handleVoiceResult);
+    /**
+     * A callback function that is passed to the useSpeechRecognition hook.
+     * It is executed when the browser has successfully recognized speech.
+     */
+    const handleSpeechResult = useCallback((transcript: string) => {
+        // Check which task was active when listening started.
+        if (activeTaskRef.current) {
+            // Run analysis for that task with the user's spoken query.
+            runAnalysis(activeTaskRef.current, transcript);
+            activeTaskRef.current = null; // Clear the active task ref.
+        }
+    }, [runAnalysis]);
+    
+    // Initialize the speech recognition hook.
+    const { isListening, error: speechError, startListening } = useSpeechRecognition(handleSpeechResult);
 
-  const handleInitiateShopSearch = useCallback(() => {
-    if (isProcessing || isSpeaking || isListening) return;
-    setIsWaitingForShopQuery(true);
-    const question = currentStrings.whatShop;
-    setLastResponse(question);
-    speak(question, currentLang.code);
-    startListening();
-  }, [isProcessing, isSpeaking, isListening, startListening, speak, currentLang.code, currentStrings.whatShop]);
+    /**
+     * Handles clicks on the main action buttons.
+     */
+    const handleTaskClick = useCallback(async (task: AssistanceTask) => {
+        // Prevent new actions while one is already in progress.
+        if (isProcessing || isSpeaking || isListening) return;
 
-
-  useEffect(() => {
-    if (speechError) {
-      setError(speechError);
-      setLastResponse(speechError);
-      speak(speechError, currentLang.code);
-    }
-  }, [speechError, speak, currentLang.code]);
-  
-  useEffect(() => {
-      if(isListening && !isWaitingForShopQuery) {
-          setLastResponse(currentStrings.listening);
-      }
-  }, [isListening, currentStrings, isWaitingForShopQuery]);
-  
-  const anyActionInProgress = !!isProcessing || isSpeaking || isListening || !!error || isSettingsOpen || isWaitingForShopQuery;
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const targetEl = event.target as HTMLElement;
-      if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') return;
-      if (event.code === 'Space' || event.key === ' ') {
-        event.preventDefault();
-        if (!anyActionInProgress) startListening();
-      }
-    };
-    if (isSessionActive) {
-      document.addEventListener('keydown', handleKeyDown);
-    }
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [anyActionInProgress, startListening, isSessionActive]);
-
-  const handleLanguageChange = (newLangCode: string) => {
-    const newIndex = LANGUAGES.findIndex(l => l.code === newLangCode);
-    if (newIndex !== -1 && newIndex !== languageIndex) {
-        setLanguageIndex(newIndex);
-        localStorage.setItem('urbanSenseLanguageIndex', newIndex.toString());
-    }
-  };
-
-  const handleMockModeChange = (enabled: boolean) => {
-    setIsMockMode(enabled);
-    localStorage.setItem('urbanSenseMockMode', JSON.stringify(enabled));
-  };
-  
-  const LocationStatus = () => {
-    let statusText = '';
-    if (isRequestingLocation) statusText = currentStrings.locationAcquiring;
-    if (locationError) statusText = currentStrings.locationStatus(locationError);
-    if (!statusText) return null;
-
-    return (
-        <div className="flex items-center justify-center text-sm text-yellow-300 gap-2">
-            <LocationPinIcon className="w-4 h-4" />
-            <p aria-live="polite">{statusText}</p>
-        </div>
-    );
-  };
-
-  return (
-    <div className="h-dvh w-screen bg-gray-900 text-white relative font-sans overflow-hidden">
-      {!isSessionActive ? (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Start Session. Tap anywhere on the screen to begin."
-          onClick={handleStartSession}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleStartSession();
+        // The "Find Shop" task has a special two-step interactive flow.
+        if (task === AssistanceTask.FIND_SHOP) {
+            activeTaskRef.current = task; // Set the active task.
+            const shopPrompt = UI_STRINGS[currentLangCode]['shop_prompt'];
+            setStatusMessage(shopPrompt);
+            try {
+              // First, ask the user what they are looking for.
+              await speak(shopPrompt, currentLangCode);
+              // THEN, start listening for their response. `await` is crucial here.
+              startListening();
+            } catch (e) {
+              const errorMsg = e instanceof Error ? e.message : "An unknown error occurred during speech.";
+              setStatusMessage(errorMsg);
             }
-          }}
-          className="flex flex-col justify-center items-center h-full w-full cursor-pointer bg-gray-800 text-white focus:outline-none focus:ring-4 focus:ring-teal-400 focus:ring-opacity-75"
-        >
-          <div className="text-center p-4">
-            <h1 className="text-5xl font-extrabold text-teal-300 mb-2">UrbanSenseAI</h1>
-            <p className="text-xl text-gray-300 mb-12">Your AI guide for urban navigation.</p>
-            <div className="flex justify-center mb-8">
-                <div className="p-4 bg-teal-500 rounded-full animate-pulse">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
+        } else {
+            // For all other tasks, run analysis directly.
+            runAnalysis(task);
+        }
+    }, [isProcessing, isSpeaking, isListening, currentLangCode, speak, startListening, runAnalysis]);
+
+    // --- useEffect Hooks for Side Effects ---
+
+    // On initial mount, request the user's location.
+    useEffect(() => {
+        requestLocation();
+    }, [requestLocation]);
+
+    // This effect centralizes error handling from various hooks.
+    useEffect(() => {
+        const error = cameraError || locationError || speechError;
+        if (error) {
+            setStatusMessage(error);
+            speak(error, currentLangCode);
+        }
+    }, [cameraError, locationError, speechError, speak, currentLangCode]);
+
+     // This effect updates the status message based on the app's current state.
+     useEffect(() => {
+        const lang = currentLangCode as keyof typeof UI_STRINGS;
+        if (isRequestingLocation) {
+             setStatusMessage(UI_STRINGS[lang]['status_location']);
+        } else if (isListening) {
+            setStatusMessage(UI_STRINGS[lang]['status_listening']);
+        } else if (!isProcessing && !isSpeaking) {
+             // If nothing else is happening, show the "Ready" message.
+             setStatusMessage(UI_STRINGS[lang]['status_ready']);
+        }
+    }, [isRequestingLocation, isListening, isProcessing, isSpeaking, currentLangCode]);
+
+    // --- Render Logic ---
+
+    // Define the configuration for the four main action buttons.
+    const taskButtons = [
+        { task: AssistanceTask.FIND_BUS, Icon: BusIcon },
+        { task: AssistanceTask.CROSS_ROAD, Icon: CrosswalkIcon },
+        { task: AssistanceTask.EXPLORE, Icon: ExploreIcon },
+        { task: AssistanceTask.FIND_SHOP, Icon: ShopIcon }
+    ];
+    
+    return (
+        <div className="relative w-screen h-screen font-sans bg-black">
+            {/* The live camera feed takes up the background. */}
+            <CameraView ref={cameraRef} onCameraError={setCameraError} />
+            
+            {/* Status & Error Overlay */}
+            <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-50 text-center z-10">
+                <p className="text-lg font-medium" aria-live="polite">
+                    {statusMessage}
+                </p>
+            </div>
+            
+            {/* Main Action Grid */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                    {taskButtons.map(({ task, Icon }) => (
+                        <ActionButton
+                            key={task}
+                            label={TASK_LABELS[currentLangCode as keyof typeof TASK_LABELS][task]}
+                            onClick={() => handleTaskClick(task)}
+                            // Disable buttons if any action is happening anywhere in the app, or if the camera failed.
+                            disabled={isProcessing !== null || isSpeaking || isListening || !!cameraError}
+                            // Show spinner only on the button that is currently processing.
+                            isProcessing={isProcessing === task}
+                            Icon={Icon}
+                        />
+                    ))}
                 </div>
             </div>
-            <p className="text-2xl font-semibold">Tap anywhere to start</p>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="absolute inset-0">
-            <CameraView ref={cameraRef} onCameraError={handleCameraError} />
-          </div>
 
-          <SettingsModal
-            isOpen={isSettingsOpen}
-            onClose={() => setIsSettingsOpen(false)}
-            currentLangCode={currentLang.code}
-            onLangChange={handleLanguageChange}
-            isMockMode={isMockMode}
-            onMockModeChange={handleMockModeChange}
-          />
-          
-          <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-60 backdrop-blur-sm z-10">
-            <div className="flex justify-between items-center max-w-4xl mx-auto">
-                <div className="w-10"></div>
-                <h1 className="text-xl font-bold text-center text-teal-300">UrbanSenseAI</h1>
-                <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    disabled={!!isProcessing || isSpeaking || isListening}
-                    className="text-white p-2 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-300 disabled:opacity-50"
-                    aria-label="Open settings"
-                >
-                    <SettingsIcon className="w-6 h-6" />
-                </button>
-            </div>
-             <LocationStatus />
-            <p
-              className={`mt-2 text-center text-lg p-3 rounded-lg transition-colors duration-300 ${error ? 'bg-red-800 text-white' : 'bg-transparent'}`}
-              aria-live="polite"
+            {/* Settings Button */}
+            <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="absolute top-4 right-4 z-30 p-3 bg-gray-800 bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:outline-none focus:ring-2 focus:ring-white"
+                aria-label="Settings"
             >
-              {lastResponse}
-            </p>
-          </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-90 backdrop-blur-sm p-4 shadow-inner border-t-2 border-teal-500 z-10">
-            <div className="flex justify-around items-center gap-2">
-              {(Object.keys(TASK_PROMPTS) as AssistanceTask[]).map((task) => (
-                  <ActionButton
-                      key={task}
-                      label={TASK_LABELS[currentLang.code][task]}
-                      onClick={() => task === AssistanceTask.FIND_SHOP ? handleInitiateShopSearch() : handleTaskSelect(task)}
-                      disabled={anyActionInProgress}
-                      isProcessing={isProcessing === task}
-                      Icon={TASK_CONFIG[task].Icon}
-                  />
-              ))}
-            </div>
-            <div className="mt-6 flex justify-around items-center px-4">
-                <button
-                    onClick={startListening}
-                    disabled={anyActionInProgress}
-                    className={`flex items-center justify-center gap-3 w-48 h-20 rounded-full shadow-lg transform transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:cursor-not-allowed disabled:transform-none ${isListening ? 'bg-red-600 animate-pulse' : 'bg-indigo-500'} disabled:bg-gray-600`}
-                    aria-label={isWaitingForShopQuery ? currentStrings.listeningButton : "Activate Voice Command"}
-                >
-                    <MicrophoneIcon className="w-10 h-10" />
-                    <span className="text-xl font-bold">{isListening ? currentStrings.listeningButton : currentStrings.useVoice}</span>
-                </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+                <SettingsIcon className="w-6 h-6" />
+            </button>
+            
+            {/* The settings modal, which is conditionally rendered. */}
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                currentLangCode={currentLangCode}
+                onLangChange={setCurrentLangCode}
+                isMockMode={isMockMode}
+                onMockModeChange={setIsMockMode}
+            />
+        </div>
+    );
+};
 
 export default App;
