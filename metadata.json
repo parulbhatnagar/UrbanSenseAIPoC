@@ -1,6 +1,4 @@
 {
-  "//": "This file is used by the development environment to specify application metadata.",
-  "//": "The 'requestFramePermissions' array tells the host environment (like a development frame or a specific deployment platform) what browser permissions the application needs to function correctly.",
   "name": "UrbanSenseAI",
   "description": "An agentic AI application to help visually impaired individuals navigate urban environments by providing real-time audio descriptions of their surroundings using a smartphone camera and Gemini AI.",
   "requestFramePermissions": [
