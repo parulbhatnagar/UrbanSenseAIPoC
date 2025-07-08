@@ -10,53 +10,35 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { AssistanceTask } from './types.ts';
-import { TASK_PROMPTS, TASK_LABELS } from './constants.ts';
+import { TASK_PROMPTS, TASK_LABELS, VOICE_COMMANDS } from './constants.ts';
 import { analyzeImageWithGemini } from './services/geminiService.ts';
 import { useTextToSpeech } from './hooks/useTextToSpeech.ts';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition.ts';
 import { useLocation } from './hooks/useLocation.ts';
 import CameraView, { CameraViewHandles } from './components/CameraView.tsx';
-import ActionButton from './components/ActionButton.tsx';
 import SettingsModal from './components/SettingsModal.tsx';
 
 // --- SVG Icon Components --- //
 // These are simple, self-contained functional components that render SVG icons.
 // They accept a `className` prop to allow for flexible styling via Tailwind CSS.
-
-const BusIcon: React.FC<{className: string}> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.9 7.37a1 1 0 0 0-.9-.37H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h.5a1.5 1.5 0 0 0 3 0h6a1.5 1.5 0 0 0 3 0h.5a1 1 0 0 0 1-1v-8a1 1 0 0 0-.1-.63ZM8 17.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Zm8 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0ZM18 14H6V8h12Z" />
-        <path d="M11 9h2v4h-2z"/>
-    </svg>
-);
-
-const CrosswalkIcon: React.FC<{className: string}> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M14.25 2.25a.75.75 0 0 0-1.5 0v1.432l-3.324 3.99a.75.75 0 0 0 .574 1.203h1.25V12h-1.25a.75.75 0 0 0-.574 1.204l3.324 3.99v1.431a.75.75 0 0 0 1.5 0v-1.432l3.324-3.99a.75.75 0 0 0-.574-1.203h-1.25V8.825h1.25a.75.75 0 0 0 .574-1.204l-3.324-3.99V2.25ZM9.75 12h4.5V8.825H9.75V12Z" />
-    </svg>
-);
-
-const ExploreIcon: React.FC<{className: string}> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-    </svg>
-);
-
-const ShopIcon: React.FC<{className: string}> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4L3 12v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
-    </svg>
-);
-
 const SettingsIcon: React.FC<{className: string}> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17-.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+        <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17-.59-1.69-.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.59-1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
     </svg>
 );
 
+const MicrophoneIcon: React.FC<{ className: string, isListening: boolean }> = ({ className, isListening }) => (
+    <div className={`relative ${className}`}>
+        {isListening && (
+            <div className="absolute inset-0 bg-teal-400 rounded-full animate-ping"></div>
+        )}
+        <svg xmlns="http://www.w3.org/2000/svg" className="relative w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+        </svg>
+    </div>
+);
 
 // --- Language & UI String Definitions --- //
-// This data structure holds all localizable content for the app.
 export const LANGUAGES = [
   { code: 'en-US', name: 'English' },
   { code: 'hi-IN', name: 'हिन्दी (Hindi)' },
@@ -65,52 +47,50 @@ export const LANGUAGES = [
 
 const UI_STRINGS: Record<string, { [key: string]: string }> = {
     'en-US': {
-        'status_initializing': "Initializing...",
-        'status_ready': "Ready. Select a task.",
+        'status_initializing': "Initializing... Please wait.",
+        'status_ready': "Tap the microphone and say a command.",
         'status_processing': "Analyzing...",
-        'status_location': "Acquiring location...",
+        'status_location': "Acquiri_location...",
         'status_listening': "Listening...",
         'shop_prompt': "What kind of shop are you looking for?",
+        'command_unrecognized': "Sorry, I didn't understand that. Please try again.",
+        'welcome': "Welcome to Urban Sense. Tap the microphone to begin."
     },
     'hi-IN': {
-        'status_initializing': "शुरू हो रहा है...",
-        'status_ready': "तैयार। एक कार्य चुनें।",
+        'status_initializing': "शुरू हो रहा है... कृपया प्रतीक्षा करें।",
+        'status_ready': "माइक्रोफ़ोन टैप करें और कमांड बोलें।",
         'status_processing': "विश्लेषण हो रहा है...",
         'status_location': "स्थान प्राप्त हो रहा है...",
         'status_listening': "सुन रहा है...",
         'shop_prompt': "आप किस तरह की दुकान ढूंढ रहे हैं?",
+        'command_unrecognized': "माफ़ कीजिए, मुझे समझ नहीं आया। कृपया फिर से प्रयास करें।",
+        'welcome': "अर्बन सेंस में आपका स्वागत है। शुरू करने के लिए माइक्रोफ़ोन टैप करें।"
     },
     'es-ES': {
-        'status_initializing': "Inicializando...",
-        'status_ready': "Listo. Seleccione una tarea.",
+        'status_initializing': "Inicializando... Por favor, espere.",
+        'status_ready': "Pulse el micrófono y diga un comando.",
         'status_processing': "Analizando...",
         'status_location': "Adquiriendo ubicación...",
         'status_listening': "Escuchando...",
         'shop_prompt': "¿Qué tipo de tienda estás buscando?",
+        'command_unrecognized': "Lo siento, no he entendido. Por favor, inténtelo de nuevo.",
+        'welcome': "Bienvenido a Urban Sense. Pulse el micrófono para comenzar."
     }
 };
 
-
 const App: React.FC = () => {
     // --- State Management ---
-    // Tracks which task is currently being processed (or null if none).
-    const [isProcessing, setIsProcessing] = useState<AssistanceTask | null>(null);
-    // The message displayed in the status bar at the top of the screen.
+    const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState(UI_STRINGS['en-US']['status_initializing']);
-    // Controls the visibility of the settings modal.
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    // The currently selected language code for UI text and speech.
     const [currentLangCode, setCurrentLangCode] = useState('en-US');
-    // Toggles between using real AI and mock responses for testing.
     const [isMockMode, setIsMockMode] = useState(false);
-    // Stores any error message related to the camera.
     const [cameraError, setCameraError] = useState<string | null>(null);
+    const [hasInitialized, setHasInitialized] = useState(false);
     
     // --- Refs ---
-    // A ref to the CameraView component instance to call its `captureFrame` method.
     const cameraRef = useRef<CameraViewHandles>(null);
-    // A ref to store which task triggered a speech recognition request (e.g., FIND_SHOP).
-    const activeTaskRef = useRef<AssistanceTask | null>(null);
+    const activeTaskRef = useRef<'COMMAND' | AssistanceTask | null>(null);
 
     // --- Custom Hooks ---
     const { speak, isSpeaking } = useTextToSpeech();
@@ -118,96 +98,113 @@ const App: React.FC = () => {
 
     /**
      * The main function to perform AI analysis.
-     * It captures an image, constructs the correct prompt, and calls the Gemini service.
      */
     const runAnalysis = useCallback(async (task: AssistanceTask, userQuery: string | null = null) => {
         if (!cameraRef.current) return;
         
         setStatusMessage(UI_STRINGS[currentLangCode]['status_processing']);
-        setIsProcessing(task);
+        setIsProcessing(true);
         
         const base64Image = cameraRef.current.captureFrame();
         if (!base64Image) {
             const errorMsg = "Failed to capture image.";
             setStatusMessage(errorMsg);
             speak(errorMsg, currentLangCode);
-            setIsProcessing(null);
+            setIsProcessing(false);
             return;
         }
 
-        // Construct the final prompt.
         let prompt = TASK_PROMPTS[task].prompt;
-        // Append a user query if provided (for FIND_SHOP task).
         if (task === AssistanceTask.FIND_SHOP && userQuery) {
-            prompt += ` The user is looking for: "${userQuery}".`;
+            prompt += ` The user is specifically looking for: "${userQuery}".`;
         }
-        // Append GPS coordinates if available for better contextual awareness.
         if (location) {
             prompt += ` Current GPS coordinates are Latitude: ${location.latitude}, Longitude: ${location.longitude}.`;
         }
 
-        // Call the Gemini service.
         const result = await analyzeImageWithGemini(base64Image, prompt, task, isMockMode);
         
-        // Update the UI and speak the result.
         setStatusMessage(result);
         await speak(result, currentLangCode);
         
-        // Reset the processing state.
-        setIsProcessing(null);
+        setIsProcessing(false);
     }, [currentLangCode, location, isMockMode, speak]);
 
     /**
-     * A callback function that is passed to the useSpeechRecognition hook.
-     * It is executed when the browser has successfully recognized speech.
+     * Finds the corresponding task for a given voice command in the current language.
      */
-    const handleSpeechResult = useCallback((transcript: string) => {
-        // Check which task was active when listening started.
-        if (activeTaskRef.current) {
-            // Run analysis for that task with the user's spoken query.
-            runAnalysis(activeTaskRef.current, transcript);
-            activeTaskRef.current = null; // Clear the active task ref.
-        }
-    }, [runAnalysis]);
-    
-    // Initialize the speech recognition hook.
-    const { isListening, error: speechError, startListening } = useSpeechRecognition(handleSpeechResult);
+    const findTaskForCommand = (transcript: string, lang: string): AssistanceTask | null => {
+        const commands = VOICE_COMMANDS[lang] || VOICE_COMMANDS['en-US'];
+        const normalizedTranscript = transcript.toLowerCase().trim();
+        return commands[normalizedTranscript] || null;
+    };
 
     /**
-     * Handles clicks on the main action buttons.
+     * Callback executed when the browser has successfully recognized speech.
      */
-    const handleTaskClick = useCallback(async (task: AssistanceTask) => {
-        // Prevent new actions while one is already in progress.
-        if (isProcessing || isSpeaking || isListening) return;
+    const handleSpeechResult = useCallback(async (transcript: string) => {
+        console.log(`Recognized speech: "${transcript}" | Active Task: ${activeTaskRef.current}`);
+        
+        // Case 1: We were listening for the answer to the "Find Shop" question.
+        if (activeTaskRef.current === AssistanceTask.FIND_SHOP) {
+            runAnalysis(AssistanceTask.FIND_SHOP, transcript);
+            activeTaskRef.current = null;
+            return;
+        }
 
-        // The "Find Shop" task has a special two-step interactive flow.
+        // Case 2: We were listening for a general command.
+        const task = findTaskForCommand(transcript, currentLangCode);
+
+        if (!task) {
+            const unrecognizedMsg = UI_STRINGS[currentLangCode]['command_unrecognized'];
+            setStatusMessage(unrecognizedMsg);
+            await speak(unrecognizedMsg, currentLangCode);
+            return;
+        }
+        
+        // Special flow for FIND_SHOP
         if (task === AssistanceTask.FIND_SHOP) {
-            activeTaskRef.current = task; // Set the active task.
+            activeTaskRef.current = AssistanceTask.FIND_SHOP;
             const shopPrompt = UI_STRINGS[currentLangCode]['shop_prompt'];
             setStatusMessage(shopPrompt);
             try {
-              // First, ask the user what they are looking for.
-              await speak(shopPrompt, currentLangCode);
-              // THEN, start listening for their response. `await` is crucial here.
-              startListening();
+                await speak(shopPrompt, currentLangCode);
+                // After speaking, immediately start listening for the user's answer.
+                startListening(currentLangCode);
             } catch (e) {
-              const errorMsg = e instanceof Error ? e.message : "An unknown error occurred during speech.";
-              setStatusMessage(errorMsg);
+                const errorMsg = e instanceof Error ? e.message : "An unknown error occurred during speech.";
+                setStatusMessage(errorMsg);
             }
         } else {
             // For all other tasks, run analysis directly.
             runAnalysis(task);
         }
-    }, [isProcessing, isSpeaking, isListening, currentLangCode, speak, startListening, runAnalysis]);
+    }, [runAnalysis, currentLangCode, speak]);
+    
+    const { isListening, error: speechError, startListening } = useSpeechRecognition(handleSpeechResult);
+
+    /**
+     * Handles the click on the main microphone button.
+     */
+    const handleMicClick = useCallback(() => {
+        // Prevent starting a new action if anything is already in progress.
+        if (isProcessing || isSpeaking || isListening || !hasInitialized) return;
+        
+        activeTaskRef.current = 'COMMAND';
+        startListening(currentLangCode);
+
+    }, [isProcessing, isSpeaking, isListening, hasInitialized, currentLangCode, startListening]);
+
 
     // --- useEffect Hooks for Side Effects ---
 
-    // On initial mount, request the user's location.
+    // On initial mount, request location and speak a welcome message once ready.
     useEffect(() => {
         requestLocation();
-    }, [requestLocation]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    // This effect centralizes error handling from various hooks.
+     // This effect centralizes error handling from various hooks.
     useEffect(() => {
         const error = cameraError || locationError || speechError;
         if (error) {
@@ -217,68 +214,66 @@ const App: React.FC = () => {
     }, [cameraError, locationError, speechError, speak, currentLangCode]);
 
      // This effect updates the status message based on the app's current state.
-     useEffect(() => {
+    useEffect(() => {
         const lang = currentLangCode as keyof typeof UI_STRINGS;
-        if (isRequestingLocation) {
-             setStatusMessage(UI_STRINGS[lang]['status_location']);
-        } else if (isListening) {
-            setStatusMessage(UI_STRINGS[lang]['status_listening']);
-        } else if (!isProcessing && !isSpeaking) {
-             // If nothing else is happening, show the "Ready" message.
-             setStatusMessage(UI_STRINGS[lang]['status_ready']);
+        let newStatus = statusMessage;
+
+        if (isRequestingLocation) newStatus = UI_STRINGS[lang]['status_location'];
+        else if (isListening) newStatus = UI_STRINGS[lang]['status_listening'];
+        else if (isProcessing) newStatus = UI_STRINGS[lang]['status_processing'];
+        else if (!isSpeaking && hasInitialized) newStatus = UI_STRINGS[lang]['status_ready'];
+        
+        setStatusMessage(newStatus);
+        // We only want to react to state changes, not the status message itself.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRequestingLocation, isListening, isProcessing, isSpeaking, hasInitialized, currentLangCode]);
+    
+    // Once location is acquired and app is ready, speak the welcome message.
+    useEffect(() => {
+        if (!isRequestingLocation && !hasInitialized) {
+            setHasInitialized(true);
+            const welcomeMsg = UI_STRINGS[currentLangCode]['welcome'];
+            setStatusMessage(welcomeMsg);
+            speak(welcomeMsg, currentLangCode);
         }
-    }, [isRequestingLocation, isListening, isProcessing, isSpeaking, currentLangCode]);
-
+    }, [isRequestingLocation, hasInitialized, speak, currentLangCode]);
+    
     // --- Render Logic ---
-
-    // Define the configuration for the four main action buttons.
-    const taskButtons = [
-        { task: AssistanceTask.FIND_BUS, Icon: BusIcon },
-        { task: AssistanceTask.CROSS_ROAD, Icon: CrosswalkIcon },
-        { task: AssistanceTask.EXPLORE, Icon: ExploreIcon },
-        { task: AssistanceTask.FIND_SHOP, Icon: ShopIcon }
-    ];
+    const isAppBusy = isProcessing || isSpeaking || isListening || !hasInitialized;
     
     return (
-        <div className="relative w-screen h-screen font-sans bg-black">
-            {/* The live camera feed takes up the background. */}
+        <div className="relative w-screen h-screen font-sans bg-black" onClick={handleMicClick}>
             <CameraView ref={cameraRef} onCameraError={setCameraError} />
             
-            {/* Status & Error Overlay */}
-            <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-50 text-center z-10">
+            <div className="absolute top-0 left-0 right-0 p-4 bg-black bg-opacity-60 text-center z-10">
                 <p className="text-lg font-medium" aria-live="polite">
                     {statusMessage}
                 </p>
             </div>
             
-            {/* Main Action Grid */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
-                    {taskButtons.map(({ task, Icon }) => (
-                        <ActionButton
-                            key={task}
-                            label={TASK_LABELS[currentLangCode as keyof typeof TASK_LABELS][task]}
-                            onClick={() => handleTaskClick(task)}
-                            // Disable buttons if any action is happening anywhere in the app, or if the camera failed.
-                            disabled={isProcessing !== null || isSpeaking || isListening || !!cameraError}
-                            // Show spinner only on the button that is currently processing.
-                            isProcessing={isProcessing === task}
-                            Icon={Icon}
-                        />
-                    ))}
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-20 flex flex-col items-center">
+                 <button
+                    onClick={handleMicClick}
+                    disabled={isAppBusy}
+                    className="w-28 h-28 bg-teal-500 rounded-full flex items-center justify-center text-white shadow-2xl transform transition-transform focus:outline-none focus:ring-4 focus:ring-teal-300 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none active:scale-95"
+                    aria-label="Start voice command"
+                >
+                    <MicrophoneIcon className="w-16 h-16" isListening={isListening} />
+                </button>
+                <div className="text-center mt-4 text-gray-300 text-sm">
+                    <p>Suggested commands:</p>
+                    <p className="font-mono">{Object.values(TASK_LABELS[currentLangCode]).join(' | ')}</p>
                 </div>
             </div>
 
-            {/* Settings Button */}
             <button
-                onClick={() => setIsSettingsOpen(true)}
+                onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}
                 className="absolute top-4 right-4 z-30 p-3 bg-gray-800 bg-opacity-50 rounded-full text-white hover:bg-opacity-75 focus:outline-none focus:ring-2 focus:ring-white"
                 aria-label="Settings"
             >
                 <SettingsIcon className="w-6 h-6" />
             </button>
             
-            {/* The settings modal, which is conditionally rendered. */}
             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
