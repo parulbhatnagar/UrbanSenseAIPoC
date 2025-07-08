@@ -3,7 +3,8 @@
   "description": "An agentic AI application to help visually impaired individuals navigate urban environments by providing real-time audio descriptions of their surroundings using a smartphone camera and Gemini AI.",
   "requestFramePermissions": [
     "camera",
-    "microphone"
+    "microphone",
+    "geolocation"
   ],
   "prompt": ""
 }
