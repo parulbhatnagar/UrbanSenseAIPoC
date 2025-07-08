@@ -40,6 +40,45 @@ export const TASK_LABELS: Record<string, Record<AssistanceTask, string>> = {
   }
 };
 
+
+/**
+ * A mapping of spoken voice commands to their corresponding assistance tasks, localized by language.
+ * The keys are the spoken phrases (normalized to lowercase) and the values are the task enums.
+ * This allows the application to be controlled entirely by voice in multiple languages.
+ */
+export const VOICE_COMMANDS: Record<string, Record<string, AssistanceTask>> = {
+  'en-US': {
+    'find bus': AssistanceTask.FIND_BUS,
+    'bus': AssistanceTask.FIND_BUS,
+    'cross road': AssistanceTask.CROSS_ROAD,
+    'cross the road': AssistanceTask.CROSS_ROAD,
+    'explore': AssistanceTask.EXPLORE,
+    'explore surroundings': AssistanceTask.EXPLORE,
+    'find shop': AssistanceTask.FIND_SHOP,
+    'shop': AssistanceTask.FIND_SHOP,
+    'find a shop': AssistanceTask.FIND_SHOP,
+  },
+  'hi-IN': {
+    'बस ढूंढें': AssistanceTask.FIND_BUS,
+    'बस': AssistanceTask.FIND_BUS,
+    'सड़क पार करें': AssistanceTask.CROSS_ROAD,
+    'अन्वेषण करें': AssistanceTask.EXPLORE,
+    'आसपास देखें': AssistanceTask.EXPLORE,
+    'दुकान ढूंढें': AssistanceTask.FIND_SHOP,
+    'दुकान': AssistanceTask.FIND_SHOP,
+  },
+  'es-ES': {
+    'buscar bus': AssistanceTask.FIND_BUS,
+    'autobús': AssistanceTask.FIND_BUS,
+    'cruzar calle': AssistanceTask.CROSS_ROAD,
+    'cruzar la calle': AssistanceTask.CROSS_ROAD,
+    'explorar': AssistanceTask.EXPLORE,
+    'buscar tienda': AssistanceTask.FIND_SHOP,
+    'tienda': AssistanceTask.FIND_SHOP,
+  }
+};
+
+
 /**
  * A record mapping each AssistanceTask to a specific, detailed prompt for the Gemini AI.
  * Each prompt starts with the `baseSystemInstruction` and then adds task-specific instructions
