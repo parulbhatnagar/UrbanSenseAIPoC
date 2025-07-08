@@ -1,35 +1,26 @@
 {
-  "//": "This is the main configuration file for the Node.js project. It defines metadata, scripts, and dependencies.",
   "name": "urbansenseai",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-
-  "//": "The 'scripts' section defines command-line scripts that can be run with 'npm run <script_name>'.",
   "scripts": {
-    "dev": "vite", "// Starts the development server with Vite for hot-reloading.",
-    "build": "vite build", "// Creates a production-ready build of the application in the 'dist' folder.",
-    "preview": "vite preview" "// Serves the production build locally to preview it before deployment."
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-
-  "//": "'engines' specifies the version of Node.js that the project is expected to run on.",
   "engines": {
     "node": ">=18.0.0"
   },
-
-  "//": "'dependencies' are the packages required for the application to run in production.",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "@google/genai": "^1.8.0"
   },
-
-  "//": "'devDependencies' are packages needed only for development and building, not for the final production application.",
   "devDependencies": {
-    "@netlify/functions": "^2.8.1", "// Types and helpers for Netlify serverless functions.",
-    "@types/node": "^22.7.4", "// TypeScript type definitions for Node.js.",
-    "@vitejs/plugin-react": "^4.3.1", "// The official Vite plugin for React.",
-    "typescript": "~5.7.2", "// The TypeScript compiler.",
-    "vite": "^5.4.8" "// The frontend build tool."
+    "@netlify/functions": "^2.8.1",
+    "@types/node": "^22.7.4",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "~5.7.2",
+    "vite": "^5.4.8"
   }
 }
