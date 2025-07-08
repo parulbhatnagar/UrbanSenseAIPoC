@@ -4,6 +4,7 @@ import { TASK_PROMPTS, TASK_LABELS } from './constants.ts';
 import { analyzeImageWithGemini } from './services/geminiService.ts';
 import { useTextToSpeech } from './hooks/useTextToSpeech.ts';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition.ts';
+import { useLocation } from './hooks/useLocation.ts';
 import CameraView, { CameraViewHandles } from './components/CameraView.tsx';
 import ActionButton from './components/ActionButton.tsx';
 import SettingsModal from './components/SettingsModal.tsx';
@@ -46,6 +47,13 @@ const SettingsIcon: React.FC<{ className: string }> = ({ className }) => (
     </svg>
 );
 
+const LocationPinIcon: React.FC<{ className: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path fillRule="evenodd" d="M11.54 22.35a.75.75 0 0 1-1.08 0l-6.75-6.75a.75.75 0 0 1 .02-1.06l.12-.12a.75.75 0 0 1 1.06 0l5.5 5.5 10.38-10.38a.75.75 0 0 1 1.06 0l.12.12a.75.75 0 0 1 0 1.06l-11.25 11.25Z" clipRule="evenodd" />
+    </svg>
+);
+
+
 const TASK_CONFIG = {
     [AssistanceTask.FIND_BUS]: { Icon: BusIcon },
     [AssistanceTask.CROSS_ROAD]: { Icon: CrosswalkIcon },
@@ -68,6 +76,9 @@ const UI_STRINGS: Record<string, any> = {
         commandSorry: "Sorry, I didn't recognize that command. Please say 'find bus', 'cross road', 'explore', or 'find shop'.",
         useVoice: "Use Voice",
         listeningButton: "Listening...",
+        whatShop: "What kind of shop are you looking for?",
+        locationAcquiring: "Acquiring location...",
+        locationStatus: (status: string) => `Location status: ${status}`
     },
     'hi-IN': {
         welcome: 'सत्र शुरू हो गया है। किसी कार्य पर टैप करें या वॉयस कमांड बटन का उपयोग करें।',
@@ -77,6 +88,9 @@ const UI_STRINGS: Record<string, any> = {
         commandSorry: "क्षमा करें, मुझे वह आदेश समझ नहीं आया। कृपया 'find bus', 'cross road', 'explore', या 'find shop' कहें।",
         useVoice: "आवाज़ का प्रयोग करें",
         listeningButton: "सुन रहा है...",
+        whatShop: "आप किस तरह की दुकान ढूंढ रहे हैं?",
+        locationAcquiring: "स्थान प्राप्त किया जा रहा है...",
+        locationStatus: (status: string) => `स्थान स्थिति: ${status}`
     },
     'es-ES': {
         welcome: 'Sesión iniciada. Toque una tarea o use el botón de comando de voz.',
@@ -86,6 +100,9 @@ const UI_STRINGS: Record<string, any> = {
         commandSorry: "Lo siento, no reconocí ese comando. Por favor, di 'find bus', 'cross road', 'explore', o 'find shop'.",
         useVoice: "Usar Voz",
         listeningButton: "Escuchando...",
+        whatShop: "¿Qué tipo de tienda estás buscando?",
+        locationAcquiring: "Adquiriendo ubicación...",
+        locationStatus: (status: string) => `Estado de la ubicación: ${status}`
     }
 };
 
@@ -93,6 +110,7 @@ function App() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState<AssistanceTask | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isWaitingForShopQuery, setIsWaitingForShopQuery] = useState(false);
   const [languageIndex, setLanguageIndex] = useState(() => {
     const savedLangIndex = localStorage.getItem('urbanSenseLanguageIndex');
     return savedLangIndex ? parseInt(savedLangIndex, 10) : 0;
@@ -109,15 +127,17 @@ function App() {
   const [error, setError] = useState<string>('');
   const cameraRef = useRef<CameraViewHandles>(null);
   const { speak, isSpeaking } = useTextToSpeech();
+  const { location, error: locationError, isRequesting: isRequestingLocation, requestLocation } = useLocation();
 
   const handleStartSession = useCallback(() => {
     setIsSessionActive(true);
+    requestLocation();
     const welcomeMsg = currentStrings.welcome;
     setLastResponse(welcomeMsg);
     speak(welcomeMsg, currentLang.code);
-  }, [speak, currentStrings]);
+  }, [speak, currentStrings, requestLocation]);
   
-  const handleTaskSelect = useCallback(async (task: AssistanceTask) => {
+  const handleTaskSelect = useCallback(async (task: AssistanceTask, query: string = '') => {
     if (isProcessing || isSpeaking) return;
 
     setError('');
@@ -137,13 +157,20 @@ function App() {
       return;
     }
 
-    const prompt = `${TASK_PROMPTS[task].prompt} Please respond in ${currentLang.name}.`;
-    const result = await analyzeImageWithGemini(base64Image || '', prompt, task, isMockMode);
+    let prompt = TASK_PROMPTS[task].prompt;
+    if (task === AssistanceTask.FIND_SHOP && query) {
+        prompt = `The user is looking for a "${query}". ` + prompt;
+    }
+    
+    const locationInfo = location ? `My current GPS location is latitude ${location.latitude}, longitude ${location.longitude}. ` : '';
+    const fullPrompt = `${locationInfo}${prompt} Please respond in ${currentLang.name}.`;
+    
+    const result = await analyzeImageWithGemini(base64Image || '', fullPrompt, task, isMockMode);
 
     setLastResponse(result);
     speak(result, currentLang.code);
     setIsProcessing(null);
-  }, [isProcessing, isSpeaking, speak, currentLang, currentStrings, isMockMode]);
+  }, [isProcessing, isSpeaking, speak, currentLang, currentStrings, isMockMode, location]);
   
   const handleCameraError = useCallback((errorMessage: string) => {
     setError(errorMessage);
@@ -167,7 +194,11 @@ function App() {
     }
 
     if (task) {
-      handleTaskSelect(task);
+        if (task === AssistanceTask.FIND_SHOP) {
+            handleInitiateShopSearch();
+        } else {
+            handleTaskSelect(task);
+        }
     } else {
       const sorryMsg = currentStrings.commandSorry;
       setLastResponse(sorryMsg);
@@ -175,7 +206,31 @@ function App() {
     }
   }, [handleTaskSelect, speak, currentLang, currentStrings]);
 
-  const { isListening, error: speechError, startListening } = useSpeechRecognition(handleVoiceCommand);
+  const handleShopQueryResponse = useCallback((query: string) => {
+    setLastResponse(currentStrings.iHeard(query));
+    setIsWaitingForShopQuery(false);
+    handleTaskSelect(AssistanceTask.FIND_SHOP, query);
+  }, [handleTaskSelect, currentStrings]);
+
+  const handleVoiceResult = useCallback((transcript: string) => {
+    if (isWaitingForShopQuery) {
+        handleShopQueryResponse(transcript);
+    } else {
+        handleVoiceCommand(transcript);
+    }
+  }, [isWaitingForShopQuery, handleShopQueryResponse, handleVoiceCommand]);
+
+  const { isListening, error: speechError, startListening } = useSpeechRecognition(handleVoiceResult);
+
+  const handleInitiateShopSearch = useCallback(() => {
+    if (isProcessing || isSpeaking || isListening) return;
+    setIsWaitingForShopQuery(true);
+    const question = currentStrings.whatShop;
+    setLastResponse(question);
+    speak(question, currentLang.code);
+    startListening();
+  }, [isProcessing, isSpeaking, isListening, startListening, speak, currentLang.code, currentStrings.whatShop]);
+
 
   useEffect(() => {
     if (speechError) {
@@ -186,12 +241,12 @@ function App() {
   }, [speechError, speak, currentLang.code]);
   
   useEffect(() => {
-      if(isListening) {
+      if(isListening && !isWaitingForShopQuery) {
           setLastResponse(currentStrings.listening);
       }
-  }, [isListening, currentStrings]);
+  }, [isListening, currentStrings, isWaitingForShopQuery]);
   
-  const anyActionInProgress = !!isProcessing || isSpeaking || isListening || !!error || isSettingsOpen;
+  const anyActionInProgress = !!isProcessing || isSpeaking || isListening || !!error || isSettingsOpen || isWaitingForShopQuery;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -199,7 +254,6 @@ function App() {
       if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') return;
       if (event.code === 'Space' || event.key === ' ') {
         event.preventDefault();
-        // Allow voice command immediately if no other action is in progress.
         if (!anyActionInProgress) startListening();
       }
     };
@@ -220,6 +274,20 @@ function App() {
   const handleMockModeChange = (enabled: boolean) => {
     setIsMockMode(enabled);
     localStorage.setItem('urbanSenseMockMode', JSON.stringify(enabled));
+  };
+  
+  const LocationStatus = () => {
+    let statusText = '';
+    if (isRequestingLocation) statusText = currentStrings.locationAcquiring;
+    if (locationError) statusText = currentStrings.locationStatus(locationError);
+    if (!statusText) return null;
+
+    return (
+        <div className="flex items-center justify-center text-sm text-yellow-300 gap-2">
+            <LocationPinIcon className="w-4 h-4" />
+            <p aria-live="polite">{statusText}</p>
+        </div>
+    );
   };
 
   return (
@@ -279,6 +347,7 @@ function App() {
                     <SettingsIcon className="w-6 h-6" />
                 </button>
             </div>
+             <LocationStatus />
             <p
               className={`mt-2 text-center text-lg p-3 rounded-lg transition-colors duration-300 ${error ? 'bg-red-800 text-white' : 'bg-transparent'}`}
               aria-live="polite"
@@ -287,13 +356,13 @@ function App() {
             </p>
           </div>
           
-          <div className="absolute bottom-0 left-0 right-0 bg-gray-800 p-4 shadow-inner border-t-2 border-teal-500 z-10">
+          <div className="absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-90 backdrop-blur-sm p-4 shadow-inner border-t-2 border-teal-500 z-10">
             <div className="flex justify-around items-center gap-2">
               {(Object.keys(TASK_PROMPTS) as AssistanceTask[]).map((task) => (
                   <ActionButton
                       key={task}
                       label={TASK_LABELS[currentLang.code][task]}
-                      onClick={() => handleTaskSelect(task)}
+                      onClick={() => task === AssistanceTask.FIND_SHOP ? handleInitiateShopSearch() : handleTaskSelect(task)}
                       disabled={anyActionInProgress}
                       isProcessing={isProcessing === task}
                       Icon={TASK_CONFIG[task].Icon}
@@ -305,7 +374,7 @@ function App() {
                     onClick={startListening}
                     disabled={anyActionInProgress}
                     className={`flex items-center justify-center gap-3 w-48 h-20 rounded-full shadow-lg transform transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:cursor-not-allowed disabled:transform-none ${isListening ? 'bg-red-600 animate-pulse' : 'bg-indigo-500'} disabled:bg-gray-600`}
-                    aria-label="Activate Voice Command"
+                    aria-label={isWaitingForShopQuery ? currentStrings.listeningButton : "Activate Voice Command"}
                 >
                     <MicrophoneIcon className="w-10 h-10" />
                     <span className="text-xl font-bold">{isListening ? currentStrings.listeningButton : currentStrings.useVoice}</span>
