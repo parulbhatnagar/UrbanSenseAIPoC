@@ -10,7 +10,7 @@ if (!apiKey) {
 }
 
 const ai = new GoogleGenAI({ apiKey });
-const model = "gemini-2.5-flash-preview-04-17";
+const model = "gemini-2.5-flash";
 
 const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod !== "POST") {
