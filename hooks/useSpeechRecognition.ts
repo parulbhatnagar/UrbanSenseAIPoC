@@ -15,6 +15,7 @@ interface ISpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
+  abort(): void;
   onresult: (event: any) => void;
   onerror: (event: any) => void;
   onstart: () => void;
@@ -49,8 +50,7 @@ export const useSpeechRecognition = (onResult: (transcript: string) => void) => 
     const recognition = new SpeechRecognition();
     recognition.continuous = false;     // We want to stop listening after the user finishes speaking a single phrase.
     recognition.interimResults = false; // We only want final, confident results, not partial ones.
-    recognition.lang = 'en-US';         // Set the default language for recognition.
-
+    
     // --- Event Handlers for the Recognition Instance ---
     recognition.onstart = () => {
       setIsListening(true);
@@ -63,8 +63,10 @@ export const useSpeechRecognition = (onResult: (transcript: string) => void) => 
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
-      // Provide a user-friendly error message. 'not-allowed' is common if microphone permission is denied.
-      setError(`Speech recognition error: ${event.error}. Please ensure microphone access is granted.`);
+      if (event.error !== 'aborted') {
+        // Provide a user-friendly error message. 'not-allowed' is common if microphone permission is denied.
+        setError(`Speech recognition error: ${event.error}. Please ensure microphone access is granted.`);
+      }
       setIsListening(false);
     };
 
@@ -83,21 +85,24 @@ export const useSpeechRecognition = (onResult: (transcript: string) => void) => 
     // It ensures that we stop listening to prevent memory leaks.
     return () => {
         if(recognitionRef.current) {
-            recognitionRef.current.stop();
+            recognitionRef.current.abort(); // Use abort to prevent onend from being called unnecessarily
         }
     }
   }, [onResult]); // This effect depends on `onResult`, so it's recreated if that callback changes.
 
   /**
-   * A memoized function to start the speech recognition process.
+   * A memoized function to start the speech recognition process for a specific language.
+   * @param lang The language code (e.g., 'en-US', 'hi-IN') for recognition.
    */
-  const startListening = useCallback(() => {
+  const startListening = useCallback((lang: string = 'en-US') => {
     // Don't start if we're already listening or if the recognition object isn't initialized.
     if (isListening || !recognitionRef.current) {
       return;
     }
     try {
-        // This can sometimes throw an error if called too soon after another speech operation.
+        // Set the correct language for this listening session.
+        recognitionRef.current.lang = lang;
+        console.log(`Starting speech recognition for language: ${lang}`);
         recognitionRef.current.start();
     } catch(e) {
         console.error("Could not start listening", e);
